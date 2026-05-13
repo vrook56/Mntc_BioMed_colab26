@@ -279,54 +279,51 @@
 
   <script>
   // ═══════════════════════════════════════════════════════════════════════
-  //  ✏️  TO ADD, REMOVE, OR CORRECT A PROJECT — edit only this list.
+  //  ✏️  TO ADD OR REMOVE A PROJECT — edit only this folder list.
   //
-  //  folder      → must match the actual folder name in the repo
-  //  title       → project name shown as the card heading
-  //  creator     → student name shown in teal ("Created by ...")
-  //  description → one or two sentences on the card
+  //  Metadata (title, creator, description) is read automatically from
+  //  each folder's about.txt file at runtime. Format:
+  //
+  //    Line 1 → Creator full name
+  //    Line 2 → Project title
+  //    Line 3 → (optional) One-sentence description
+  //
+  //  Do NOT put creator/title here — they will be ignored in favor of
+  //  what is actually inside about.txt.
   // ═══════════════════════════════════════════════════════════════════════
-  const PROJECTS = [
-    {
-      folder:      "Project01",
-      title:       "Infection & Immunity",
-      creator:     "Shali Shoemaker",
-      description: "Interactive infection and immunity demonstration showing pathogen invasion, immune response activation, recovery, and biomedical concepts."
-    },
-    {
-      folder:      "Project02",
-      title:       "ClinicalSkillsSim",
-      creator:     "Eliana Babbit",
-      description: "Clinical skills simulation focused on patient care, vital signs, communication, teamwork, and healthcare decision-making."
-    },
-    {
-      folder:      "Project03",
-      title:       "ClinicalSkillsTrainer",
-      creator:     "Matthew Mercer",
-      description: "Biomedical vitals and reflex companion app designed to help students measure, record, and interpret patient health indicators."
-    },
-    {
-      folder:      "Project04",
-      title:       "ForensicInvestigation",
-      creator:     "William Berry",
-      description: "Interactive biomedical crime scene simulator featuring fingerprint analysis, DNA evidence, suspect investigation, and forensic reasoning."
-    },
-    {
-      folder:      "Project05",
-      title:       "Infection & Immunity",
-      creator:     "Shali Shoemaker",
-      description: "Interactive infection and immunity demonstration showing pathogen invasion, immune response activation, recovery, and biomedical concepts."
-    },
-    {
-      folder:      "Project06",
-      title:       "MicroBioLab",
-      creator:     "Kai Crawford",
-      description: "Advanced microbiology exploration lab featuring microbes, pathogen analysis, treatment simulations, and AI-assisted biomedical learning."
-    }
+  const FOLDERS = [
+    "Project01",
+    "Project02",
+    "Project03",
+    "Project04",
+    "Project05",
+    "Project06"
   ];
   // ═══════════════════════════════════════════════════════════════════════
   //  🚫 Do not edit below this line
   // ═══════════════════════════════════════════════════════════════════════
+
+  async function fetchAbout(folder) {
+    try {
+      const res = await fetch(`${folder}/about.txt`, { cache: "no-store" });
+      if (!res.ok) throw new Error("not found");
+      const text = await res.text();
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      return {
+        folder,
+        creator:     lines[0] || "Unknown Student",
+        title:       lines[1] || folder,
+        description: lines[2] || ""
+      };
+    } catch {
+      return {
+        folder,
+        creator:     "—",
+        title:       folder,
+        description: `about.txt not found in ${folder}/`
+      };
+    }
+  }
 
   function buildCard({ folder, title, creator, description }) {
     const article = document.createElement('article');
@@ -363,7 +360,11 @@
     return article;
   }
 
-  document.getElementById('strip').append(...PROJECTS.map(buildCard));
+  (async () => {
+    const strip = document.getElementById('strip');
+    const projects = await Promise.all(FOLDERS.map(fetchAbout));
+    strip.append(...projects.map(buildCard));
+  })();
   </script>
 </body>
 </html>
