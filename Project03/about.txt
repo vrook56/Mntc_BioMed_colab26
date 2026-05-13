@@ -1,2 +1,3 @@
 Matthew Mercer
 ClinicalSkillsTrainer
+Companion training app for measuring, recording, and interpreting patient vitals and reflexes with guided biomedical feedback.
