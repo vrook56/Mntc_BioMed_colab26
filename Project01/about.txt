@@ -1,2 +1,3 @@
 Shali Shoemaker
 Infection&Immunity
+Hands-on clinical simulation covering patient assessment, vital signs, communication, and healthcare decision-making in realistic scenarios.
