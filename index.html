@@ -133,35 +133,6 @@
       border-radius: 999px;
     }
 
-    /* Skeleton loading cards */
-    .skeleton-card {
-      flex: 0 0 390px;
-      scroll-snap-align: start;
-      background: var(--panel-soft);
-      border-radius: 22px;
-      overflow: hidden;
-      border: 1px solid var(--line);
-      animation: pulse 1.4s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.55; }
-    }
-
-    .sk-img  { height: 540px; background: rgba(255,255,255,0.06); }
-    .sk-body { padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 12px; }
-    .sk-line {
-      background: rgba(255,255,255,0.09);
-      border-radius: 6px;
-      height: 16px;
-    }
-    .sk-line.title  { height: 22px; width: 75%; }
-    .sk-line.name   { width: 50%; }
-    .sk-line.desc1  { width: 95%; }
-    .sk-line.desc2  { width: 78%; }
-
-    /* Real project cards */
     .project-card {
       flex: 0 0 390px;
       scroll-snap-align: start;
@@ -260,21 +231,6 @@
 
     .launch-note span { color: var(--gold); }
 
-    /* No-projects message */
-    .no-projects {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 60px 24px;
-      color: var(--muted);
-      text-align: center;
-    }
-
-    .no-projects strong { color: var(--text); font-size: 1.1rem; }
-
     footer {
       margin-top: 12px;
       text-align: center;
@@ -288,48 +244,12 @@
       header { padding: 28px 22px; }
       .gallery-header { display: block; }
       .hint { margin-top: 6px; }
-      .project-card,
-      .skeleton-card { flex-basis: 320px; }
-      .image-frame,
-      .sk-img { height: 445px; }
+      .project-card { flex-basis: 320px; }
+      .image-frame { height: 445px; }
     }
   </style>
 </head>
 <body>
-
-  <!--
-    ═══════════════════════════════════════════════════════════
-    FOLDER STRUCTURE — keep index.html beside project folders:
-
-      Gallery/
-        index.html
-        Project01/
-          app.html
-          infograph.png
-          about.txt
-        Project02/
-          app.html
-          infograph.png
-          about.txt
-        ...
-
-    about.txt FORMAT (plain text, one item per line):
-      Line 1 — Project title
-      Line 2 — Creator name
-      Line 3+ — Description (optional; extra lines are joined)
-
-    Example about.txt:
-      ForensicInvestigation
-      William Berry
-      Interactive biomedical crime scene simulator featuring
-      fingerprint analysis and forensic reasoning.
-
-    HOW DISCOVERY WORKS:
-      All folders Project01–Project30 are checked in parallel.
-      Missing folders are silently skipped — gaps are fine.
-      To raise the ceiling, change MAX_PROJECTS below.
-    ═══════════════════════════════════════════════════════════
-  -->
 
   <div class="page-shell">
     <header>
@@ -348,36 +268,7 @@
       <p class="hint">Scroll horizontally → Click a project to launch</p>
     </div>
 
-    <main class="project-strip" id="strip">
-      <!-- Skeleton placeholders shown while fetching -->
-      <div class="skeleton-card">
-        <div class="sk-img"></div>
-        <div class="sk-body">
-          <div class="sk-line title"></div>
-          <div class="sk-line name"></div>
-          <div class="sk-line desc1"></div>
-          <div class="sk-line desc2"></div>
-        </div>
-      </div>
-      <div class="skeleton-card">
-        <div class="sk-img"></div>
-        <div class="sk-body">
-          <div class="sk-line title"></div>
-          <div class="sk-line name"></div>
-          <div class="sk-line desc1"></div>
-          <div class="sk-line desc2"></div>
-        </div>
-      </div>
-      <div class="skeleton-card">
-        <div class="sk-img"></div>
-        <div class="sk-body">
-          <div class="sk-line title"></div>
-          <div class="sk-line name"></div>
-          <div class="sk-line desc1"></div>
-          <div class="sk-line desc2"></div>
-        </div>
-      </div>
-    </main>
+    <main class="project-strip" id="strip"></main>
 
     <footer>
       Created by MNTC Programming &amp; Artificial Intelligence Students<br />
@@ -387,112 +278,94 @@
   </div>
 
   <script>
-    // ── Config ────────────────────────────────────────────────
-    // Raise this if you ever have more than 30 projects.
-    const MAX_PROJECTS = 30;
-
-    // ── Helpers ───────────────────────────────────────────────
-    const pad = n => String(n).padStart(2, '0');
-
-    /**
-     * Parse about.txt:
-     *   Line 1 → title
-     *   Line 2 → creator
-     *   Lines 3+ → description (joined with a space)
-     */
-    function parseAbout(text) {
-      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-      return {
-        title:       lines[0] || 'Untitled Project',
-        creator:     lines[1] || 'Unknown Creator',
-        description: lines.slice(2).join(' ')
-      };
+  // ═══════════════════════════════════════════════════════════════════════
+  //  ✏️  TO ADD, REMOVE, OR CORRECT A PROJECT — edit only this list.
+  //
+  //  folder      → must match the actual folder name in the repo
+  //  title       → card heading
+  //  creator     → shown in teal
+  //  description → one or two sentences on the card
+  //
+  //  Works on GitHub Pages AND locally — no about.txt files needed.
+  // ═══════════════════════════════════════════════════════════════════════
+  const PROJECTS = [
+    {
+      folder:      "Project01",
+      title:       "Infection & Immunity",
+      creator:     "Shali Shoemaker",
+      description: "Interactive infection and immunity demonstration showing pathogen invasion, immune response activation, recovery, and biomedical concepts."
+    },
+    {
+      folder:      "Project02",
+      title:       "ClinicalSkillsSim",
+      creator:     "Eliana Babbit",
+      description: "Clinical skills simulation focused on patient care, vital signs, communication, teamwork, and healthcare decision-making."
+    },
+    {
+      folder:      "Project03",
+      title:       "ClinicalSkillsTrainer",
+      creator:     "Matthew Mercer",
+      description: "Biomedical vitals and reflex companion app designed to help students measure, record, and interpret patient health indicators."
+    },
+    {
+      folder:      "Project04",
+      title:       "ForensicInvestigation",
+      creator:     "William Berry",
+      description: "Interactive biomedical crime scene simulator featuring fingerprint analysis, DNA evidence, suspect investigation, and forensic reasoning."
+    },
+    {
+      folder:      "Project05",
+      title:       "Infection & Immunity",
+      creator:     "Shali Shoemaker",
+      description: "Interactive infection and immunity demonstration showing pathogen invasion, immune response activation, recovery, and biomedical concepts."
+    },
+    {
+      folder:      "Project06",
+      title:       "MicroBioLab",
+      creator:     "Kai Crawford",
+      description: "Advanced microbiology exploration lab featuring microbes, pathogen analysis, treatment simulations, and AI-assisted biomedical learning."
     }
+  ];
+  // ═══════════════════════════════════════════════════════════════════════
+  //  🚫 Do not edit below this line
+  // ═══════════════════════════════════════════════════════════════════════
 
-    /** Fetch text from a URL; returns null if missing or error. */
-    async function tryFetch(url) {
-      try {
-        const res = await fetch(url);
-        return res.ok ? await res.text() : null;
-      } catch {
-        return null;
-      }
-    }
-
-    // ── Card builder ──────────────────────────────────────────
-    function buildCard(folder, { title, creator, description }) {
-      const article = document.createElement('article');
-      article.className = 'project-card';
-      article.innerHTML = `
-        <a href="${folder}/app.html" target="_blank">
-          <div class="image-frame">
-            <img src="${folder}/infograph.png" alt="${title} Infograph" />
-            <div class="img-fallback">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" stroke-width="1.3">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <path d="M3 9l4-4 4 4 4-4 4 4"/>
-                <circle cx="8.5" cy="13.5" r="1.5"/>
-              </svg>
-              <span>infograph.png not found<br/>in ${folder}/</span>
-            </div>
-          </div>
-          <div class="project-info">
-            <h3>${title}</h3>
-            <p class="creator">Created by ${creator}</p>
-            ${description ? `<p class="description">${description}</p>` : ''}
-            <div class="launch-note"><span>&#x25CF;</span> Launch application</div>
-          </div>
-        </a>`;
-
-      // Broken image fallback
-      const img      = article.querySelector('img');
-      const fallback = article.querySelector('.img-fallback');
-      img.addEventListener('error', () => {
-        img.classList.add('broken');
-        fallback.classList.add('visible');
-      });
-
-      return article;
-    }
-
-    // ── Main loader ───────────────────────────────────────────
-    async function loadProjects() {
-      const strip = document.getElementById('strip');
-
-      // Fire ALL fetches in parallel — gaps are fine, order is preserved
-      const folders  = Array.from({ length: MAX_PROJECTS }, (_, i) => `Project${pad(i + 1)}`);
-      const results  = await Promise.all(
-        folders.map(async folder => {
-          const text = await tryFetch(`${folder}/about.txt`);
-          return text !== null ? { folder, meta: parseAbout(text) } : null;
-        })
-      );
-
-      // Remove skeletons
-      strip.querySelectorAll('.skeleton-card').forEach(el => el.remove());
-
-      const found = results.filter(Boolean);
-
-      if (found.length === 0) {
-        strip.innerHTML = `
-          <div class="no-projects">
-            <svg width="52" height="52" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="1.4" opacity="0.4">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
+  function buildCard({ folder, title, creator, description }) {
+    const article = document.createElement('article');
+    article.className = 'project-card';
+    article.innerHTML = `
+      <a href="${folder}/app.html" target="_blank">
+        <div class="image-frame">
+          <img src="${folder}/infograph.png" alt="${title} Infograph" />
+          <div class="img-fallback">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.3">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M3 9l4-4 4 4 4-4 4 4"/>
+              <circle cx="8.5" cy="13.5" r="1.5"/>
             </svg>
-            <strong>No projects found</strong>
-            <span>Make sure each project folder contains an about.txt file.</span>
-          </div>`;
-        return;
-      }
+            <span>infograph.png not found<br/>in ${folder}/</span>
+          </div>
+        </div>
+        <div class="project-info">
+          <h3>${title}</h3>
+          <p class="creator">Created by ${creator}</p>
+          ${description ? `<p class="description">${description}</p>` : ''}
+          <div class="launch-note"><span>&#x25CF;</span> Launch application</div>
+        </div>
+      </a>`;
 
-      found.forEach(({ folder, meta }) => strip.appendChild(buildCard(folder, meta)));
-    }
+    const img      = article.querySelector('img');
+    const fallback = article.querySelector('.img-fallback');
+    img.addEventListener('error', () => {
+      img.classList.add('broken');
+      fallback.classList.add('visible');
+    });
 
-    loadProjects();
+    return article;
+  }
+
+  document.getElementById('strip').append(...PROJECTS.map(buildCard));
   </script>
 </body>
 </html>
