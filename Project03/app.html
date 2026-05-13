@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinical Skills Trainer - BioMed Career Tech</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #151b2e;
+            --bg-card: #1a2137;
+            --accent-teal: #00d4aa;
+            --accent-cyan: #00b4d8;
+            --accent-warning: #ff6b6b;
+            --text-primary: #e8edf4;
+            --text-secondary: #9ca9be;
+            --text-muted: #657083;
+            --border: #2a3650;
+            --glow: rgba(0, 212, 170, 0.3);
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background grid */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(var(--border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.3;
+            animation: gridMove 20s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+            border-bottom: 2px solid var(--border);
+            position: relative;
+        }
+
+        h1 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 3.5rem;
+            background: linear-gradient(135deg, var(--accent-teal), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .subtitle {
+            font-family: 'IBM Plex Mono', monospace;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .skill-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+            animation: fadeIn 1s ease-out 0.4s both;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .skill-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .skill-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-teal), var(--accent-cyan));
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .skill-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .skill-card:hover {
+            border-color: var(--accent-teal);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 212, 170, 0.2);
+        }
+
+        .skill-card.active {
+            border-color: var(--accent-teal);
+            background: linear-gradient(135deg, var(--bg-card), rgba(0, 212, 170, 0.1));
+            box-shadow: 0 0 30px var(--glow);
+        }
+
+        .skill-card.active::before {
+            transform: scaleX(1);
+        }
+
+        .skill-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .skill-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .skill-description {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .training-module {
+            display: none;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .training-module.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .module-header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .module-header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, var(--glow) 0%, transparent 70%);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.1); }
+        }
+
+        .module-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent-teal);
+        }
+
+        .scenario-selector {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .scenario-btn {
+            font-family: 'IBM Plex Mono', monospace;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 2px solid var(--border);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .scenario-btn:hover {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 180, 216, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .scenario-btn.active {
+            background: linear-gradient(135deg, var(--accent-teal), var(--accent-cyan));
+            border-color: transparent;
+            color: var(--bg-primary);
+            font-weight: 600;
+        }
+
+        .scenario-content {
+            display: none;
+        }
+
+        .scenario-content.active {
+            display: block;
+            animation: fadeInScale 0.5s ease-out;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .patient-info {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card));
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .patient-info::before {
+            content: '🏥 PATIENT FILE';
+            font-family: 'IBM Plex Mono', monospace;
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: var(--bg-card);
+            padding: 0 10px;
+            font-size: 0.75rem;
+            color: var(--accent-cyan);
+            letter-spacing: 1px;
+        }
+
+        .patient-info h3 {
+            color: var(--accent-cyan);
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+        }
+
+        .patient-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .detail-item {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        .detail-label {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .steps-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .step {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .step.completed {
+            border-color: var(--accent-teal);
+            background: linear-gradient(135deg, var(--bg-card), rgba(0, 212, 170, 0.05));
+        }
+
+        .step.current {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 20px rgba(0, 180, 216, 0.3);
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 180, 216, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(0, 180, 216, 0.5); }
+        }
+
+        .step-number {
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .step.completed .step-number {
+            background: var(--accent-teal);
+            border-color: var(--accent-teal);
+            color: var(--bg-primary);
+        }
+
+        .step.current .step-number {
+            background: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            color: var(--bg-primary);
+            animation: bounce 1s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .step-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            padding-top: 0.5rem;
+        }
+
+        .step-instruction {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .step-visual {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            text-align: center;
+            border: 1px dashed var(--border);
+        }
+
+        .step-visual.interactive {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .step-visual.interactive:hover {
+            border-color: var(--accent-teal);
+            background: rgba(0, 212, 170, 0.05);
+        }
+
+        .measurement-display {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-teal);
+            margin: 1rem 0;
+            text-align: center;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .alert-box {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 107, 107, 0.05));
+            border: 2px solid var(--accent-warning);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .alert-box::before {
+            content: '⚠️ ';
+            font-size: 1.2rem;
+        }
+
+        .success-box {
+            background: linear-gradient(135deg, rgba(0, 212, 170, 0.1), rgba(0, 212, 170, 0.05));
+            border: 2px solid var(--accent-teal);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .success-box::before {
+            content: '✓ ';
+            font-size: 1.2rem;
+            color: var(--accent-teal);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            font-family: 'IBM Plex Mono', monospace;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-teal), var(--accent-cyan));
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 212, 170, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 180, 216, 0.1);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 2rem 0;
+            border: 1px solid var(--border);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-teal), var(--accent-cyan));
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px var(--glow);
+        }
+
+        .back-button {
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .skill-selector {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Clinical Skills Trainer</h1>
+            <p class="subtitle">BioMed Career Tech • Interactive Learning</p>
+        </header>
+
+        <div id="skillSelection" class="skill-selector">
+            <div class="skill-card" data-skill="bloodPressure">
+                <span class="skill-icon">🩺</span>
+                <h3 class="skill-title">Blood Pressure</h3>
+                <p class="skill-description">Learn to measure systolic and diastolic pressure using a sphygmomanometer and stethoscope</p>
+            </div>
+
+            <div class="skill-card" data-skill="heartRate">
+                <span class="skill-icon">❤️</span>
+                <h3 class="skill-title">Heart Rate</h3>
+                <p class="skill-description">Master pulse palpation techniques at radial and carotid sites with proper timing methods</p>
+            </div>
+
+            <div class="skill-card" data-skill="reflexTest">
+                <span class="skill-icon">🔨</span>
+                <h3 class="skill-title">Reflex Tests</h3>
+                <p class="skill-description">Practice proper reflex hammer technique for patellar and other neurological assessments</p>
+            </div>
+        </div>
+
+        <!-- Blood Pressure Module -->
+        <div id="bloodPressure" class="training-module">
+            <button class="btn btn-secondary back-button" onclick="backToSelection()">← Back to Skills</button>
+            
+            <div class="module-header">
+                <h2 class="module-title">Blood Pressure Measurement</h2>
+                <p class="skill-description">Master the technique of measuring blood pressure using a manual sphygmomanometer</p>
+            </div>
+
+            <div class="scenario-selector">
+                <button class="scenario-btn active" data-scenario="bp1">Scenario 1: Routine Checkup</button>
+                <button class="scenario-btn" data-scenario="bp2">Scenario 2: Athletic Patient</button>
+                <button class="scenario-btn" data-scenario="bp3">Scenario 3: Elderly Patient</button>
+            </div>
+
+            <div id="bp1" class="scenario-content active">
+                <div class="patient-info">
+                    <h3>Patient: Sarah Martinez</h3>
+                    <div class="patient-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Age</div>
+                            <div class="detail-value">32 years</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Gender</div>
+                            <div class="detail-value">Female</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Reason</div>
+                            <div class="detail-value">Annual physical</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Symptoms</div>
+                            <div class="detail-value">None reported</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="bp1-progress" style="width: 0%"></div>
+                </div>
+
+                <div class="steps-container" id="bp1-steps">
+                    <div class="step current" data-step="1">
+                        <div class="step-number">1</div>
+                        <h4 class="step-title">Prepare the Equipment</h4>
+                        <p class="step-instruction">
+                            Gather a properly sized blood pressure cuff (covers 80% of upper arm), sphygmomanometer, and stethoscope. 
+                            Ensure the patient has been seated quietly for at least 5 minutes with feet flat on the floor.
+                        </p>
+                        <div class="alert-box">
+                            The patient should avoid caffeine, exercise, and smoking for 30 minutes before measurement.
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('bp1', 1)">Equipment Ready ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <h4 class="step-title">Position the Cuff</h4>
+                        <p class="step-instruction">
+                            Place the cuff on the patient's bare upper arm, 1 inch above the antecubital fossa (elbow crease). 
+                            The cuff's artery marker should align with the brachial artery. Ensure it's snug but not too tight—you 
+                            should be able to fit two fingers under it.
+                        </p>
+                        <div class="step-visual">
+                            <p style="font-size: 3rem; margin: 1rem 0;">💪</p>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem;">Cuff positioned on upper arm</p>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('bp1', 2)">Cuff Positioned ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <h4 class="step-title">Locate Brachial Pulse</h4>
+                        <p class="step-instruction">
+                            Using your fingers (not thumb), locate the brachial artery pulse in the antecubital fossa. 
+                            This is where you'll place your stethoscope. Take a moment to feel the pulse clearly.
+                        </p>
+                        <div class="step-visual interactive" onclick="simulatePulse('bp1')">
+                            <p style="font-size: 2rem; margin: 1rem 0;">👆</p>
+                            <p style="color: var(--accent-cyan); font-size: 0.9rem;">Click to palpate pulse</p>
+                            <div id="bp1-pulse-feedback"></div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('bp1', 3)">Pulse Located ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="4">
+                        <div class="step-number">4</div>
+                        <h4 class="step-title">Inflate and Listen</h4>
+                        <p class="step-instruction">
+                            Place stethoscope earpieces in your ears and the diaphragm over the brachial artery. 
+                            Close the valve on the bulb and inflate the cuff rapidly to about 180 mmHg (30 mmHg above expected systolic).
+                            Then slowly release air at 2-3 mmHg per second while listening.
+                        </p>
+                        <div class="step-visual interactive" onclick="takeMeasurement('bp1')">
+                            <p style="font-size: 2.5rem; margin: 1rem 0;">🩺</p>
+                            <p style="color: var(--accent-teal); font-size: 0.9rem;">Click to take measurement</p>
+                            <div id="bp1-measurement"></div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('bp1', 4)">Measurement Complete ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="5">
+                        <div class="step-number">5</div>
+                        <h4 class="step-title">Record Results</h4>
+                        <p class="step-instruction">
+                            The first sound you heard (Korotkoff sound) is the systolic pressure. 
+                            When the sounds disappear completely, that's the diastolic pressure. 
+                            Record both values and the arm used.
+                        </p>
+                        <div id="bp1-results" style="display: none;">
+                            <div class="success-box">
+                                Blood Pressure: <strong>118/76 mmHg</strong> (Left arm)<br>
+                                Classification: Normal<br>
+                                Time: <span id="bp1-time"></span>
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('bp1', 5)">Results Recorded ✓</button>
+                            <button class="btn btn-secondary" onclick="resetScenario('bp1')">Restart Scenario</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="bp2" class="scenario-content">
+                <div class="patient-info">
+                    <h3>Patient: Marcus Johnson</h3>
+                    <div class="patient-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Age</div>
+                            <div class="detail-value">24 years</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Gender</div>
+                            <div class="detail-value">Male</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Activity</div>
+                            <div class="detail-value">College athlete (track)</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Reason</div>
+                            <div class="detail-value">Pre-season physical</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="bp2-progress" style="width: 0%"></div>
+                </div>
+
+                <div class="steps-container" id="bp2-steps">
+                    <div class="step current" data-step="1">
+                        <div class="step-number">1</div>
+                        <h4 class="step-title">Athlete Considerations</h4>
+                        <p class="step-instruction">
+                            Athletes often have lower resting heart rates and blood pressure due to cardiovascular conditioning. 
+                            Ensure the patient hasn't exercised recently. Note that athletic patients may have readings of 110/70 
+                            or even lower, which is normal for them.
+                        </p>
+                        <div class="alert-box">
+                            Athletic heart: Lower BP and heart rate are expected. Readings around 105-110/65-70 mmHg are typical.
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('bp2', 1)">Understood ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <h4 class="step-title">Standard Procedure</h4>
+                        <p class="step-instruction">
+                            Follow the same measurement technique: position cuff, locate pulse, inflate to 180 mmHg, 
+                            and release slowly at 2-3 mmHg per second. Listen carefully for the first and last Korotkoff sounds.
+                        </p>
+                        <div class="step-visual interactive" onclick="takeMeasurement('bp2')">
+                            <p style="font-size: 2.5rem; margin: 1rem 0;">🩺</p>
+                            <p style="color: var(--accent-teal); font-size: 0.9rem;">Click to take measurement</p>
+                            <div id="bp2-measurement"></div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('bp2', 2)">Measurement Complete ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <h4 class="step-title">Interpret Results</h4>
+                        <p class="step-instruction">
+                            Review the measurement and compare with typical athletic norms. Document the results 
+                            and note this is within normal range for a conditioned athlete.
+                        </p>
+                        <div id="bp2-results" style="display: none;">
+                            <div class="success-box">
+                                Blood Pressure: <strong>108/68 mmHg</strong> (Right arm)<br>
+                                Classification: Normal (Athletic)<br>
+                                Resting heart rate: 52 bpm (typical for endurance athlete)
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('bp2', 3)">Results Interpreted ✓</button>
+                            <button class="btn btn-secondary" onclick="resetScenario('bp2')">Restart Scenario</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="bp3" class="scenario-content">
+                <div class="patient-info">
+                    <h3>Patient: Eleanor Rodriguez</h3>
+                    <div class="patient-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Age</div>
+                            <div class="detail-value">68 years</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Gender</div>
+                            <div class="detail-value">Female</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Conditions</div>
+                            <div class="detail-value">Hypertension (managed)</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Medications</div>
+                            <div class="detail-value">Lisinopril 10mg daily</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="bp3-progress" style="width: 0%"></div>
+                </div>
+
+                <div class="steps-container" id="bp3-steps">
+                    <div class="step current" data-step="1">
+                        <div class="step-number">1</div>
+                        <h4 class="step-title">Elderly Patient Considerations</h4>
+                        <p class="step-instruction">
+                            Older patients may have stiffer arteries, making accurate measurement more challenging. 
+                            Ensure proper rest time (5+ minutes), check for orthostatic hypotension if needed, 
+                            and be gentle with fragile skin when applying the cuff.
+                        </p>
+                        <div class="alert-box">
+                            Age-related changes: Arteries become less elastic. Isolated systolic hypertension is common. 
+                            Target BP for this patient should be <130/80 mmHg.
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('bp3', 1)">Considerations Noted ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <h4 class="step-title">Careful Technique</h4>
+                        <p class="step-instruction">
+                            Position the cuff gently, ensuring it's at heart level. Elderly patients may need a 
+                            larger cuff size. Inflate slowly to avoid discomfort, and listen carefully as 
+                            sounds may be fainter.
+                        </p>
+                        <div class="step-visual interactive" onclick="takeMeasurement('bp3')">
+                            <p style="font-size: 2.5rem; margin: 1rem 0;">🩺</p>
+                            <p style="color: var(--accent-teal); font-size: 0.9rem;">Click to take measurement</p>
+                            <div id="bp3-measurement"></div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('bp3', 2)">Measurement Complete ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <h4 class="step-title">Evaluate and Document</h4>
+                        <p class="step-instruction">
+                            Compare the reading to the patient's target range and previous measurements. 
+                            For patients on antihypertensive medication, consistent monitoring is crucial.
+                        </p>
+                        <div id="bp3-results" style="display: none;">
+                            <div class="success-box">
+                                Blood Pressure: <strong>126/78 mmHg</strong> (Left arm)<br>
+                                Classification: Well-controlled on medication<br>
+                                Within target range (<130/80 mmHg)<br>
+                                Previous reading (2 weeks ago): 128/80 mmHg
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('bp3', 3)">Evaluation Complete ✓</button>
+                            <button class="btn btn-secondary" onclick="resetScenario('bp3')">Restart Scenario</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Heart Rate Module -->
+        <div id="heartRate" class="training-module">
+            <button class="btn btn-secondary back-button" onclick="backToSelection()">← Back to Skills</button>
+            
+            <div class="module-header">
+                <h2 class="module-title">Heart Rate Assessment</h2>
+                <p class="skill-description">Learn proper pulse palpation technique and accurate heart rate measurement</p>
+            </div>
+
+            <div class="scenario-selector">
+                <button class="scenario-btn active" data-scenario="hr1">Scenario 1: Radial Pulse</button>
+                <button class="scenario-btn" data-scenario="hr2">Scenario 2: Carotid Pulse</button>
+                <button class="scenario-btn" data-scenario="hr3">Scenario 3: Post-Exercise</button>
+            </div>
+
+            <div id="hr1" class="scenario-content active">
+                <div class="patient-info">
+                    <h3>Patient: David Chen</h3>
+                    <div class="patient-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Age</div>
+                            <div class="detail-value">45 years</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Gender</div>
+                            <div class="detail-value">Male</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">State</div>
+                            <div class="detail-value">Resting</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Site</div>
+                            <div class="detail-value">Radial artery</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="hr1-progress" style="width: 0%"></div>
+                </div>
+
+                <div class="steps-container">
+                    <div class="step current" data-step="1">
+                        <div class="step-number">1</div>
+                        <h4 class="step-title">Position Patient and Locate Radial Artery</h4>
+                        <p class="step-instruction">
+                            Have the patient sit or lie comfortably with arm supported and wrist relaxed. 
+                            Using your index and middle fingers (never use your thumb as it has its own pulse), 
+                            locate the radial artery on the thumb side of the wrist, just below the base of the thumb.
+                        </p>
+                        <div class="step-visual">
+                            <p style="font-size: 3rem; margin: 1rem 0;">✋</p>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem;">Place two fingers on radial artery</p>
+                        </div>
+                        <div class="alert-box">
+                            Important: Use your INDEX and MIDDLE fingers only. Your thumb has its own pulse and will give false readings.
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('hr1', 1)">Pulse Located ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <h4 class="step-title">Feel the Pulse Quality</h4>
+                        <p class="step-instruction">
+                            Before counting, assess the pulse quality. Is it strong or weak? Regular or irregular? 
+                            Note the rhythm. Apply gentle pressure—too much will obliterate the pulse, too little and you won't feel it clearly.
+                        </p>
+                        <div class="step-visual interactive" onclick="simulatePulse('hr1')">
+                            <p style="font-size: 2.5rem; margin: 1rem 0;">💓</p>
+                            <p style="color: var(--accent-cyan); font-size: 0.9rem;">Click to palpate pulse rhythm</p>
+                            <div id="hr1-pulse-feedback"></div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('hr1', 2)">Quality Assessed ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <h4 class="step-title">Count the Pulse</h4>
+                        <p class="step-instruction">
+                            Using a watch with a second hand or timer, count the beats for 30 seconds and multiply by 2. 
+                            For irregular pulses, count for a full 60 seconds. Start counting on a beat as "zero" then count from there.
+                        </p>
+                        <div class="step-visual interactive" onclick="countPulse('hr1')">
+                            <p style="font-size: 2.5rem; margin: 1rem 0;">⏱️</p>
+                            <p style="color: var(--accent-teal); font-size: 0.9rem;">Click to start 30-second count</p>
+                            <div id="hr1-count" style="font-family: 'IBM Plex Mono', monospace; font-size: 1.5rem; margin-top: 1rem;"></div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('hr1', 3)">Count Complete ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="4">
+                        <div class="step-number">4</div>
+                        <h4 class="step-title">Record and Interpret</h4>
+                        <p class="step-instruction">
+                            Calculate the heart rate (beats counted × 2 if 30-second count). 
+                            Normal resting heart rate for adults is 60-100 bpm. Record the rate, rhythm, and site.
+                        </p>
+                        <div id="hr1-results" style="display: none;">
+                            <div class="success-box">
+                                Heart Rate: <strong>72 bpm</strong><br>
+                                Rhythm: Regular<br>
+                                Quality: Strong, easily palpable<br>
+                                Site: Right radial artery<br>
+                                Classification: Normal sinus rhythm
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('hr1', 4)">Results Recorded ✓</button>
+                            <button class="btn btn-secondary" onclick="resetScenario('hr1')">Restart Scenario</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="hr2" class="scenario-content">
+                <div class="patient-info">
+                    <h3>Patient: Emergency Assessment</h3>
+                    <div class="patient-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Situation</div>
+                            <div class="detail-value">Rapid assessment needed</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Site</div>
+                            <div class="detail-value">Carotid artery</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Reason</div>
+                            <div class="detail-value">Radial pulse weak/unpalpable</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="hr2-progress" style="width: 0%"></div>
+                </div>
+
+                <div class="steps-container">
+                    <div class="step current" data-step="1">
+                        <div class="step-number">1</div>
+                        <h4 class="step-title">When to Use Carotid Pulse</h4>
+                        <p class="step-instruction">
+                            The carotid pulse is used when peripheral pulses are difficult to palpate (shock, hypotension), 
+                            during CPR assessment, or in emergency situations. It's stronger and more reliable than peripheral pulses 
+                            in critical conditions.
+                        </p>
+                        <div class="alert-box">
+                            CAUTION: Never palpate both carotid arteries simultaneously—this can reduce blood flow to the brain. 
+                            Use gentle pressure. Avoid in patients with carotid artery disease.
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('hr2', 1)">Indications Understood ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <h4 class="step-title">Locate Carotid Artery</h4>
+                        <p class="step-instruction">
+                            Position yourself beside the patient. Use your index and middle fingers to locate the larynx (Adam's apple). 
+                            Slide your fingers laterally into the groove between the trachea and the sternocleidomastoid muscle. 
+                            You should feel the pulse within 1-2 cm of the trachea.
+                        </p>
+                        <div class="step-visual">
+                            <p style="font-size: 3rem; margin: 1rem 0;">👤</p>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem;">Lateral to trachea, medial to SCM muscle</p>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('hr2', 2)">Carotid Located ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <h4 class="step-title">Assess and Count</h4>
+                        <p class="step-instruction">
+                            Apply gentle pressure to feel the pulse. Count for 30-60 seconds depending on urgency and regularity. 
+                            In emergencies, even a 6-second count (×10) can give a rapid assessment.
+                        </p>
+                        <div class="step-visual interactive" onclick="countPulse('hr2')">
+                            <p style="font-size: 2.5rem; margin: 1rem 0;">⏱️</p>
+                            <p style="color: var(--accent-teal); font-size: 0.9rem;">Click to count carotid pulse</p>
+                            <div id="hr2-count" style="font-family: 'IBM Plex Mono', monospace; font-size: 1.5rem; margin-top: 1rem;"></div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('hr2', 3)">Assessment Complete ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="4">
+                        <div class="step-number">4</div>
+                        <h4 class="step-title">Document Findings</h4>
+                        <p class="step-instruction">
+                            Record the pulse rate, quality, and rhythm. Note that carotid pulse was used instead of radial 
+                            and document the reason (e.g., "radial pulse weak due to hypotension").
+                        </p>
+                        <div id="hr2-results" style="display: none;">
+                            <div class="success-box">
+                                Heart Rate: <strong>88 bpm</strong><br>
+                                Site: Left carotid artery<br>
+                                Quality: Strong, bounding<br>
+                                Rhythm: Regular<br>
+                                Note: Radial pulse weak but carotid pulse easily palpable
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('hr2', 4)">Documented ✓</button>
+                            <button class="btn btn-secondary" onclick="resetScenario('hr2')">Restart Scenario</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="hr3" class="scenario-content">
+                <div class="patient-info">
+                    <h3>Patient: Jessica Torres</h3>
+                    <div class="patient-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Age</div>
+                            <div class="detail-value">28 years</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Activity</div>
+                            <div class="detail-value">Just finished treadmill test</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Situation</div>
+                            <div class="detail-value">Exercise recovery monitoring</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="hr3-progress" style="width: 0%"></div>
+                </div>
+
+                <div class="steps-container">
+                    <div class="step current" data-step="1">
+                        <div class="step-number">1</div>
+                        <h4 class="step-title">Post-Exercise Guidelines</h4>
+                        <p class="step-instruction">
+                            After exercise, heart rate will be elevated. Normal response is 140-180+ bpm immediately after vigorous activity. 
+                            Take the pulse immediately (within 5 seconds of stopping) for the most accurate peak reading, 
+                            then reassess during recovery.
+                        </p>
+                        <div class="alert-box">
+                            Recovery heart rate: HR should drop by at least 12 bpm in the first minute after exercise. 
+                            A slower recovery may indicate poor cardiovascular fitness or other issues.
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('hr3', 1)">Guidelines Reviewed ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <h4 class="step-title">Immediate Post-Exercise Count</h4>
+                        <p class="step-instruction">
+                            Quickly locate the radial or carotid pulse. For speed, count for 6 seconds and multiply by 10, 
+                            or count for 10 seconds and multiply by 6. This gives a rapid assessment of peak heart rate.
+                        </p>
+                        <div class="step-visual interactive" onclick="countPulse('hr3')">
+                            <p style="font-size: 2.5rem; margin: 1rem 0;">🏃⏱️</p>
+                            <p style="color: var(--accent-teal); font-size: 0.9rem;">Click for 10-second count</p>
+                            <div id="hr3-count" style="font-family: 'IBM Plex Mono', monospace; font-size: 1.5rem; margin-top: 1rem;"></div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('hr3', 2)">Peak HR Recorded ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <h4 class="step-title">Monitor Recovery</h4>
+                        <p class="step-instruction">
+                            Recheck the pulse after 1 minute of rest. Compare to the immediate post-exercise reading. 
+                            A healthy recovery shows a significant drop (>12 bpm is good, >20 bpm is excellent).
+                        </p>
+                        <div class="step-visual interactive" onclick="checkRecovery('hr3')">
+                            <p style="font-size: 2.5rem; margin: 1rem 0;">⏳</p>
+                            <p style="color: var(--accent-cyan); font-size: 0.9rem;">Click to check 1-minute recovery</p>
+                            <div id="hr3-recovery"></div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('hr3', 3)">Recovery Monitored ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="4">
+                        <div class="step-number">4</div>
+                        <h4 class="step-title">Interpret and Record</h4>
+                        <p class="step-instruction">
+                            Document peak HR, recovery HR, and the change. Assess cardiovascular response to exercise. 
+                            Normal recovery indicates good cardiovascular fitness.
+                        </p>
+                        <div id="hr3-results" style="display: none;">
+                            <div class="success-box">
+                                <strong>Exercise Heart Rate Assessment:</strong><br>
+                                Peak HR (immediate): 168 bpm<br>
+                                1-min Recovery HR: 142 bpm<br>
+                                HR Drop: 26 bpm (Excellent recovery)<br>
+                                5-min Recovery HR: 88 bpm<br>
+                                Assessment: Normal cardiovascular response to exercise
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('hr3', 4)">Assessment Complete ✓</button>
+                            <button class="btn btn-secondary" onclick="resetScenario('hr3')">Restart Scenario</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reflex Test Module -->
+        <div id="reflexTest" class="training-module">
+            <button class="btn btn-secondary back-button" onclick="backToSelection()">← Back to Skills</button>
+            
+            <div class="module-header">
+                <h2 class="module-title">Reflex Testing</h2>
+                <p class="skill-description">Master neurological reflex assessment using proper hammer technique</p>
+            </div>
+
+            <div class="scenario-selector">
+                <button class="scenario-btn active" data-scenario="ref1">Scenario 1: Patellar Reflex</button>
+                <button class="scenario-btn" data-scenario="ref2">Scenario 2: Achilles Reflex</button>
+                <button class="scenario-btn" data-scenario="ref3">Scenario 3: Abnormal Reflexes</button>
+            </div>
+
+            <div id="ref1" class="scenario-content active">
+                <div class="patient-info">
+                    <h3>Patient: Michael Anderson</h3>
+                    <div class="patient-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Age</div>
+                            <div class="detail-value">35 years</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Gender</div>
+                            <div class="detail-value">Male</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Test</div>
+                            <div class="detail-value">Patellar (knee-jerk) reflex</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Reason</div>
+                            <div class="detail-value">Routine neurological exam</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="ref1-progress" style="width: 0%"></div>
+                </div>
+
+                <div class="steps-container">
+                    <div class="step current" data-step="1">
+                        <div class="step-number">1</div>
+                        <h4 class="step-title">Position the Patient</h4>
+                        <p class="step-instruction">
+                            Have the patient sit on the edge of the exam table with legs dangling freely, not touching the floor. 
+                            This relaxes the quadriceps muscle. Alternatively, if the patient is lying down, support the knee 
+                            in a slightly flexed position (about 90 degrees).
+                        </p>
+                        <div class="step-visual">
+                            <p style="font-size: 3rem; margin: 1rem 0;">🦵</p>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem;">Legs hanging freely, quadriceps relaxed</p>
+                        </div>
+                        <div class="alert-box">
+                            Key: The muscle must be completely relaxed. Distraction techniques (having patient interlock fingers 
+                            and pull apart) can help anxious patients relax.
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('ref1', 1)">Patient Positioned ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <h4 class="step-title">Locate the Patellar Tendon</h4>
+                        <p class="step-instruction">
+                            Place your thumb on the patient's patella (kneecap). The patellar tendon is the cord-like structure 
+                            just below the patella that connects to the tibial tuberosity. This is your target—about 1-2 inches 
+                            below the bottom of the kneecap.
+                        </p>
+                        <div class="step-visual">
+                            <p style="font-size: 2.5rem; margin: 1rem 0;">👆🦵</p>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem;">Patellar tendon: just below kneecap</p>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('ref1', 2)">Tendon Located ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <h4 class="step-title">Strike with Reflex Hammer</h4>
+                        <p class="step-instruction">
+                            Hold the reflex hammer loosely at the end of the handle. Use a quick, snapping wrist motion 
+                            (not an arm swing) to strike the patellar tendon directly. The strike should be firm but not hard—
+                            you're testing a neurological pathway, not strength. Strike perpendicular to the tendon.
+                        </p>
+                        <div class="step-visual interactive" onclick="testReflex('ref1')">
+                            <p style="font-size: 2.5rem; margin: 1rem 0;">🔨</p>
+                            <p style="color: var(--accent-teal); font-size: 0.9rem;">Click to perform reflex test</p>
+                            <div id="ref1-result"></div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('ref1', 3)">Reflex Tested ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="4">
+                        <div class="step-number">4</div>
+                        <h4 class="step-title">Observe and Grade Response</h4>
+                        <p class="step-instruction">
+                            Watch for the quadriceps muscle to contract, causing the lower leg to kick forward (extend). 
+                            Grade the reflex on a 0-4 scale:<br>
+                            0 = Absent<br>
+                            1+ = Diminished/low normal<br>
+                            2+ = Normal<br>
+                            3+ = Brisk, more than normal<br>
+                            4+ = Hyperactive with clonus (rhythmic contractions)
+                        </p>
+                        <div id="ref1-grade" style="display: none;">
+                            <div class="success-box">
+                                <strong>Patellar Reflex Results:</strong><br>
+                                Right knee: 2+ (Normal)<br>
+                                Left knee: 2+ (Normal)<br>
+                                Response: Symmetrical, brisk extension of both lower legs<br>
+                                Interpretation: Normal deep tendon reflex, intact L2-L4 nerve roots
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('ref1', 4)">Results Graded ✓</button>
+                            <button class="btn btn-secondary" onclick="resetScenario('ref1')">Restart Scenario</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="ref2" class="scenario-content">
+                <div class="patient-info">
+                    <h3>Patient: Lisa Martinez</h3>
+                    <div class="patient-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Age</div>
+                            <div class="detail-value">42 years</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Gender</div>
+                            <div class="detail-value">Female</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Test</div>
+                            <div class="detail-value">Achilles reflex</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Complaint</div>
+                            <div class="detail-value">Lower back pain, numbness in foot</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="ref2-progress" style="width: 0%"></div>
+                </div>
+
+                <div class="steps-container">
+                    <div class="step current" data-step="1">
+                        <div class="step-number">1</div>
+                        <h4 class="step-title">Position for Achilles Test</h4>
+                        <p class="step-instruction">
+                            Have the patient kneel on a chair with feet hanging over the edge, or have them lie prone with 
+                            feet extending off the table. Alternatively, if sitting, dorsiflex the foot slightly by holding 
+                            the ball of the foot and gently pushing it toward the shin to put tension on the Achilles tendon.
+                        </p>
+                        <div class="step-visual">
+                            <p style="font-size: 3rem; margin: 1rem 0;">🦶</p>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem;">Ankle in dorsiflexion, foot relaxed</p>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('ref2', 1)">Position Set ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <h4 class="step-title">Locate Achilles Tendon</h4>
+                        <p class="step-instruction">
+                            The Achilles tendon is the thick cord at the back of the ankle connecting the calf muscles to the heel. 
+                            Place your hand on the ball of the foot to stabilize and slightly dorsiflex. The target area is 
+                            about 2-3 inches above where the tendon inserts into the heel bone.
+                        </p>
+                        <div class="alert-box">
+                            Clinical significance: Achilles reflex tests S1-S2 nerve roots. Diminished or absent response 
+                            may indicate nerve root compression from disc herniation.
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('ref2', 2)">Tendon Located ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <h4 class="step-title">Perform Test</h4>
+                        <p class="step-instruction">
+                            Strike the Achilles tendon with the reflex hammer using the same quick, snapping wrist motion. 
+                            The expected response is plantar flexion—the foot pointing downward as the calf muscle contracts. 
+                            Test both sides and compare.
+                        </p>
+                        <div class="step-visual interactive" onclick="testReflex('ref2')">
+                            <p style="font-size: 2.5rem; margin: 1rem 0;">🔨</p>
+                            <p style="color: var(--accent-teal); font-size: 0.9rem;">Click to test Achilles reflex</p>
+                            <div id="ref2-result"></div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('ref2', 3)">Test Performed ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="4">
+                        <div class="step-number">4</div>
+                        <h4 class="step-title">Grade and Document</h4>
+                        <p class="step-instruction">
+                            Grade the response using the same 0-4 scale. Document side-to-side differences, as asymmetry 
+                            can be clinically significant. In this patient with lower back pain, diminished reflexes 
+                            could indicate nerve root involvement.
+                        </p>
+                        <div id="ref2-grade" style="display: none;">
+                            <div class="alert-box">
+                                <strong>Achilles Reflex Results:</strong><br>
+                                Right ankle: 2+ (Normal plantar flexion)<br>
+                                Left ankle: 1+ (Diminished response)<br>
+                                <br>
+                                <strong>⚠️ Clinical Note:</strong> Asymmetric reflexes with diminished left Achilles reflex. 
+                                Combined with patient's left foot numbness and lower back pain, this suggests possible 
+                                S1 nerve root compression. Recommend further evaluation.
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('ref2', 4)">Assessment Complete ✓</button>
+                            <button class="btn btn-secondary" onclick="resetScenario('ref2')">Restart Scenario</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="ref3" class="scenario-content">
+                <div class="patient-info">
+                    <h3>Patient: Robert Williams</h3>
+                    <div class="patient-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Age</div>
+                            <div class="detail-value">58 years</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">History</div>
+                            <div class="detail-value">Type 2 diabetes, peripheral neuropathy</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Test</div>
+                            <div class="detail-value">Multiple reflex assessment</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="ref3-progress" style="width: 0%"></div>
+                </div>
+
+                <div class="steps-container">
+                    <div class="step current" data-step="1">
+                        <div class="step-number">1</div>
+                        <h4 class="step-title">Understanding Abnormal Reflexes</h4>
+                        <p class="step-instruction">
+                            Abnormal reflexes can indicate various conditions:<br><br>
+                            <strong>Absent/Diminished (0-1+):</strong> Lower motor neuron lesions, peripheral neuropathy (common in diabetes), 
+                            nerve root compression, muscle disorders<br><br>
+                            <strong>Hyperactive (3-4+):</strong> Upper motor neuron lesions, spinal cord injury above the reflex level, 
+                            stroke, multiple sclerosis, hyperthyroidism
+                        </p>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('ref3', 1)">Concepts Reviewed ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <h4 class="step-title">Test Multiple Reflexes</h4>
+                        <p class="step-instruction">
+                            In this patient with diabetes and neuropathy, test both upper extremity (biceps, triceps) and 
+                            lower extremity (patellar, Achilles) reflexes. This creates a complete neurological picture and 
+                            helps identify the pattern of involvement.
+                        </p>
+                        <div class="step-visual interactive" onclick="testMultipleReflexes('ref3')">
+                            <p style="font-size: 2.5rem; margin: 1rem 0;">🔨📋</p>
+                            <p style="color: var(--accent-teal); font-size: 0.9rem;">Click to perform complete reflex exam</p>
+                            <div id="ref3-results"></div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('ref3', 2)">All Reflexes Tested ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <h4 class="step-title">Interpret Pattern</h4>
+                        <p class="step-instruction">
+                            Look at the overall pattern of findings. In peripheral neuropathy, you typically see 
+                            diminished or absent reflexes in a "stocking-glove" distribution—affecting distal extremities 
+                            (feet and hands) more than proximal areas. Lower extremity reflexes are often more affected than upper.
+                        </p>
+                        <div id="ref3-interpretation" style="display: none;">
+                            <div class="alert-box">
+                                <strong>Complete Reflex Examination Results:</strong><br><br>
+                                <strong>Upper Extremities:</strong><br>
+                                Biceps: 2+/2+ (Normal bilaterally)<br>
+                                Triceps: 2+/2+ (Normal bilaterally)<br><br>
+                                <strong>Lower Extremities:</strong><br>
+                                Patellar: 1+/1+ (Diminished bilaterally)<br>
+                                Achilles: 0/0 (Absent bilaterally)<br><br>
+                                <strong>Pattern:</strong> Distal lower extremity reflexes more affected than proximal and upper extremities.<br>
+                                <strong>Interpretation:</strong> Consistent with length-dependent peripheral neuropathy, 
+                                typical of diabetic neuropathy. The longest nerves (to feet) are affected first and most severely.
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('ref3', 3)">Pattern Interpreted ✓</button>
+                        </div>
+                    </div>
+
+                    <div class="step" data-step="4">
+                        <div class="step-number">4</div>
+                        <h4 class="step-title">Clinical Correlation</h4>
+                        <p class="step-instruction">
+                            Always correlate reflex findings with the patient's history, symptoms, and other physical exam findings. 
+                            In this case, absent ankle reflexes with a history of diabetes supports the diagnosis of 
+                            diabetic peripheral neuropathy. Document clearly and consider referral if indicated.
+                        </p>
+                        <div class="success-box">
+                            Documentation complete. Findings consistent with patient's known condition. 
+                            Recommend continued diabetes management and regular neurological monitoring.
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="completeStep('ref3', 4)">Case Complete ✓</button>
+                            <button class="btn btn-secondary" onclick="resetScenario('ref3')">Restart Scenario</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Module switching
+        document.querySelectorAll('.skill-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const skill = this.dataset.skill;
+                
+                // Hide skill selection
+                document.getElementById('skillSelection').style.display = 'none';
+                
+                // Deactivate all cards and modules
+                document.querySelectorAll('.skill-card').forEach(c => c.classList.remove('active'));
+                document.querySelectorAll('.training-module').forEach(m => m.classList.remove('active'));
+                
+                // Activate selected
+                this.classList.add('active');
+                document.getElementById(skill).classList.add('active');
+            });
+        });
+
+        function backToSelection() {
+            document.getElementById('skillSelection').style.display = 'grid';
+            document.querySelectorAll('.training-module').forEach(m => m.classList.remove('active'));
+            document.querySelectorAll('.skill-card').forEach(c => c.classList.remove('active'));
+        }
+
+        // Scenario switching within modules
+        document.querySelectorAll('.scenario-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const scenario = this.dataset.scenario;
+                const module = this.closest('.training-module').id;
+                
+                // Update buttons
+                this.parentElement.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Update content
+                document.querySelectorAll(`#${module} .scenario-content`).forEach(s => s.classList.remove('active'));
+                document.getElementById(scenario).classList.add('active');
+            });
+        });
+
+        // Step completion logic
+        function completeStep(scenarioId, stepNum) {
+            const stepsContainer = document.querySelector(`#${scenarioId}-steps`);
+            const steps = stepsContainer.querySelectorAll('.step');
+            const currentStep = steps[stepNum - 1];
+            const totalSteps = steps.length;
+            
+            // Mark current step as completed
+            currentStep.classList.remove('current');
+            currentStep.classList.add('completed');
+            
+            // Update progress bar
+            const progress = (stepNum / totalSteps) * 100;
+            document.getElementById(`${scenarioId}-progress`).style.width = progress + '%';
+            
+            // Show results if last step
+            if (stepNum === totalSteps) {
+                const resultsDiv = document.getElementById(`${scenarioId}-results`);
+                if (resultsDiv) {
+                    resultsDiv.style.display = 'block';
+                }
+                const gradeDiv = document.getElementById(`${scenarioId}-grade`);
+                if (gradeDiv) {
+                    gradeDiv.style.display = 'block';
+                }
+                const interpretationDiv = document.getElementById(`${scenarioId}-interpretation`);
+                if (interpretationDiv) {
+                    interpretationDiv.style.display = 'block';
+                }
+                // Set timestamp for BP measurements
+                if (scenarioId.startsWith('bp')) {
+                    const timeSpan = document.getElementById(`${scenarioId}-time`);
+                    if (timeSpan) {
+                        const now = new Date();
+                        timeSpan.textContent = now.toLocaleTimeString();
+                    }
+                }
+            }
+            
+            // Activate next step if not last
+            if (stepNum < totalSteps) {
+                steps[stepNum].classList.add('current');
+                steps[stepNum].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function resetScenario(scenarioId) {
+            const stepsContainer = document.querySelector(`#${scenarioId}-steps`);
+            const steps = stepsContainer.querySelectorAll('.step');
+            
+            // Reset all steps
+            steps.forEach((step, index) => {
+                step.classList.remove('completed', 'current');
+                if (index === 0) {
+                    step.classList.add('current');
+                }
+            });
+            
+            // Reset progress
+            document.getElementById(`${scenarioId}-progress`).style.width = '0%';
+            
+            // Hide results
+            const resultsDiv = document.getElementById(`${scenarioId}-results`);
+            if (resultsDiv) resultsDiv.style.display = 'none';
+            const gradeDiv = document.getElementById(`${scenarioId}-grade`);
+            if (gradeDiv) gradeDiv.style.display = 'none';
+            const interpretationDiv = document.getElementById(`${scenarioId}-interpretation`);
+            if (interpretationDiv) interpretationDiv.style.display = 'none';
+            
+            // Clear interactive displays
+            const measurement = document.getElementById(`${scenarioId}-measurement`);
+            if (measurement) measurement.innerHTML = '';
+            const count = document.getElementById(`${scenarioId}-count`);
+            if (count) count.innerHTML = '';
+            const recovery = document.getElementById(`${scenarioId}-recovery`);
+            if (recovery) recovery.innerHTML = '';
+            const pulseFeedback = document.getElementById(`${scenarioId}-pulse-feedback`);
+            if (pulseFeedback) pulseFeedback.innerHTML = '';
+            const reflexResult = document.getElementById(`${scenarioId}-result`);
+            if (reflexResult) reflexResult.innerHTML = '';
+            const resultsDisplay = document.getElementById(`${scenarioId}-results`);
+            if (resultsDisplay) resultsDisplay.innerHTML = '';
+            
+            // Scroll to top
+            steps[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Simulation functions
+        function simulatePulse(scenarioId) {
+            const feedback = document.getElementById(`${scenarioId}-pulse-feedback`);
+            feedback.innerHTML = '<div class="success-box" style="margin-top: 1rem;">Pulse felt: Strong, regular rhythm at approximately 72 bpm</div>';
+        }
+
+        function takeMeasurement(scenarioId) {
+            const measurement = document.getElementById(`${scenarioId}-measurement`);
+            let bpValue = '118/76';
+            
+            if (scenarioId === 'bp2') {
+                bpValue = '108/68';
+            } else if (scenarioId === 'bp3') {
+                bpValue = '126/78';
+            }
+            
+            // Simulate measurement animation
+            measurement.innerHTML = '<div style="text-align: center; color: var(--text-muted); margin-top: 1rem;">Measuring...</div>';
+            
+            setTimeout(() => {
+                measurement.innerHTML = `<div class="measurement-display">${bpValue} mmHg</div>
+                    <div style="text-align: center; color: var(--text-secondary); margin-top: 0.5rem;">
+                        Systolic: ${bpValue.split('/')[0]} | Diastolic: ${bpValue.split('/')[1]}
+                    </div>`;
+            }, 2000);
+        }
+
+        function countPulse(scenarioId) {
+            const countDisplay = document.getElementById(`${scenarioId}-count`);
+            let duration = 30;
+            let heartRate = 72;
+            
+            if (scenarioId === 'hr2') {
+                heartRate = 88;
+            } else if (scenarioId === 'hr3') {
+                duration = 10;
+                heartRate = 168;
+            }
+            
+            const beatsInDuration = Math.round((heartRate / 60) * duration);
+            
+            countDisplay.innerHTML = `<div style="color: var(--accent-cyan);">Counting for ${duration} seconds...</div>`;
+            
+            let count = 0;
+            const interval = setInterval(() => {
+                count++;
+                if (count <= beatsInDuration) {
+                    countDisplay.innerHTML = `<div style="color: var(--accent-teal);">Count: ${count}</div>`;
+                }
+            }, (duration * 1000) / beatsInDuration);
+            
+            setTimeout(() => {
+                clearInterval(interval);
+                const calculatedHR = scenarioId === 'hr3' ? beatsInDuration * 6 : beatsInDuration * 2;
+                countDisplay.innerHTML = `
+                    <div class="measurement-display">${calculatedHR} bpm</div>
+                    <div style="text-align: center; color: var(--text-secondary); font-size: 0.9rem;">
+                        Counted ${beatsInDuration} beats in ${duration} seconds
+                    </div>`;
+            }, duration * 1000);
+        }
+
+        function checkRecovery(scenarioId) {
+            const recovery = document.getElementById(`${scenarioId}-recovery`);
+            recovery.innerHTML = '<div style="text-align: center; color: var(--text-muted); margin-top: 1rem;">Waiting 1 minute...</div>';
+            
+            setTimeout(() => {
+                recovery.innerHTML = `
+                    <div class="measurement-display">142 bpm</div>
+                    <div class="success-box" style="margin-top: 1rem;">
+                        Recovery drop: 26 bpm (168 → 142)<br>
+                        Excellent cardiovascular recovery response
+                    </div>`;
+            }, 2000);
+        }
+
+        function testReflex(scenarioId) {
+            const result = document.getElementById(`${scenarioId}-result`);
+            
+            result.innerHTML = '<div style="text-align: center; color: var(--text-muted); margin-top: 1rem;">Testing reflex...</div>';
+            
+            setTimeout(() => {
+                if (scenarioId === 'ref1') {
+                    result.innerHTML = `
+                        <div style="margin-top: 1rem; text-align: center;">
+                            <p style="font-size: 1.5rem; color: var(--accent-teal); margin-bottom: 0.5rem;">✓ Response Observed</p>
+                            <div style="color: var(--text-secondary);">
+                                Quadriceps contracted, lower leg extended briskly<br>
+                                Grade: 2+ (Normal reflex)
+                            </div>
+                        </div>`;
+                } else if (scenarioId === 'ref2') {
+                    result.innerHTML = `
+                        <div style="margin-top: 1rem; text-align: center;">
+                            <p style="font-size: 1.5rem; color: var(--accent-teal); margin-bottom: 0.5rem;">Plantar Flexion Response</p>
+                            <div style="color: var(--text-secondary);">
+                                Right: Normal plantar flexion (2+)<br>
+                                Left: Diminished response (1+)<br>
+                                <span style="color: var(--accent-warning);">Note asymmetry</span>
+                            </div>
+                        </div>`;
+                }
+            }, 1500);
+        }
+
+        function testMultipleReflexes(scenarioId) {
+            const results = document.getElementById(`${scenarioId}-results`);
+            
+            results.innerHTML = '<div style="text-align: center; color: var(--text-muted); margin-top: 1rem;">Testing all reflexes...</div>';
+            
+            setTimeout(() => {
+                results.innerHTML = `
+                    <div style="margin-top: 1rem;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                                <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">BICEPS</div>
+                                <div style="color: var(--accent-teal); font-size: 1.2rem;">2+ / 2+</div>
+                            </div>
+                            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                                <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">TRICEPS</div>
+                                <div style="color: var(--accent-teal); font-size: 1.2rem;">2+ / 2+</div>
+                            </div>
+                            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--accent-warning);">
+                                <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">PATELLAR</div>
+                                <div style="color: var(--accent-warning); font-size: 1.2rem;">1+ / 1+</div>
+                            </div>
+                            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--accent-warning);">
+                                <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">ACHILLES</div>
+                                <div style="color: var(--accent-warning); font-size: 1.2rem;">0 / 0</div>
+                            </div>
+                        </div>
+                        <div style="text-align: center; color: var(--text-secondary); font-size: 0.9rem;">
+                            Pattern: Distal lower extremity reflexes diminished/absent
+                        </div>
+                    </div>`;
+            }, 2500);
+        }
+    </script>
+</body>
+</html>

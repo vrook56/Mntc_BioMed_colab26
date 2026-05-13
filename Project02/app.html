@@ -1,0 +1,3175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ForensicLab X — Biomedical Investigation Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ROOT VARIABLES & RESET
+   ============================================================ */
+:root {
+  --bg-void:    #040810;
+  --bg-dark:    #070d1a;
+  --bg-panel:   #0b1425;
+  --bg-card:    #0e1a30;
+  --bg-hover:   #132240;
+  --blue-core:  #00aaff;
+  --blue-glow:  #0066cc;
+  --blue-dim:   #003366;
+  --red-core:   #cc2200;
+  --red-glow:   #ff3311;
+  --red-dim:    #660011;
+  --green-ok:   #00ff88;
+  --amber:      #ffaa00;
+  --text-hi:    #e8f4ff;
+  --text-mid:   #8ab4cc;
+  --text-lo:    #3d6080;
+  --border:     rgba(0,170,255,0.15);
+  --border-hot: rgba(0,170,255,0.5);
+  --shadow-b:   0 0 20px rgba(0,170,255,0.2);
+  --shadow-r:   0 0 20px rgba(204,34,0,0.3);
+  --font-head:  'Orbitron', monospace;
+  --font-mono:  'Share Tech Mono', monospace;
+  --font-body:  'Exo 2', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-void);
+  color: var(--text-hi);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  overflow-x: hidden;
+  cursor: default;
+}
+
+/* ============================================================
+   ANIMATED BACKGROUND GRID
+   ============================================================ */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(0,170,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,170,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background: radial-gradient(ellipse at 20% 50%, rgba(0,40,100,0.25) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 20%, rgba(80,0,20,0.2) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* ============================================================
+   SCANLINE OVERLAY
+   ============================================================ */
+.scanlines {
+  position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 2px,
+    rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px
+  );
+}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+#app { position: relative; z-index: 1; }
+
+/* ============================================================
+   TOP HEADER / NAV
+   ============================================================ */
+.top-header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(4,8,16,0.95);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  padding: 0 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 60px;
+  box-shadow: 0 2px 30px rgba(0,170,255,0.1);
+}
+
+.logo-block {
+  display: flex; align-items: center; gap: 12px;
+}
+
+.logo-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--blue-glow), var(--red-dim));
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 0 15px rgba(0,170,255,0.4);
+}
+
+.logo-text {
+  font-family: var(--font-head);
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: var(--blue-core);
+  text-shadow: 0 0 15px rgba(0,170,255,0.6);
+}
+
+.logo-sub {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  color: var(--text-lo);
+  letter-spacing: 2px;
+}
+
+.header-center {
+  display: flex; gap: 6px; align-items: center;
+}
+
+.phase-btn {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-lo);
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+
+.phase-btn.active {
+  border-color: var(--blue-core);
+  color: var(--blue-core);
+  background: rgba(0,170,255,0.08);
+  box-shadow: 0 0 8px rgba(0,170,255,0.2);
+}
+
+.phase-btn.done {
+  border-color: var(--green-ok);
+  color: var(--green-ok);
+  background: rgba(0,255,136,0.05);
+}
+
+.phase-btn.locked { opacity: 0.3; cursor: not-allowed; }
+
+.header-right {
+  display: flex; align-items: center; gap: 16px;
+}
+
+.case-badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--amber);
+  letter-spacing: 2px;
+}
+
+.progress-ring-wrap {
+  position: relative; width: 36px; height: 36px;
+}
+
+.progress-ring-wrap svg {
+  transform: rotate(-90deg);
+}
+
+.progress-ring-bg { fill: none; stroke: var(--bg-panel); stroke-width: 3; }
+.progress-ring-fg {
+  fill: none; stroke: var(--blue-core); stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  transition: stroke-dashoffset 0.8s ease;
+  filter: drop-shadow(0 0 4px var(--blue-core));
+}
+
+.progress-pct {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  color: var(--blue-core);
+}
+
+/* ============================================================
+   SECTION WRAPPER
+   ============================================================ */
+.section {
+  display: none;
+  min-height: calc(100vh - 60px);
+  padding: 2rem;
+  animation: fadeIn 0.5s ease;
+}
+
+.section.active { display: block; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   SECTION HEADERS
+   ============================================================ */
+.section-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-title {
+  font-family: var(--font-head);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--blue-core);
+  text-shadow: 0 0 20px rgba(0,170,255,0.4);
+  letter-spacing: 4px;
+}
+
+.section-subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-lo);
+  margin-top: 4px;
+  letter-spacing: 2px;
+}
+
+/* ============================================================
+   GLOW CARDS / PANELS
+   ============================================================ */
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.panel::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--blue-core), transparent);
+  opacity: 0.5;
+}
+
+.panel-red::before {
+  background: linear-gradient(90deg, transparent, var(--red-core), transparent);
+}
+
+.panel-red { border-color: rgba(204,34,0,0.2); }
+
+.panel-title {
+  font-family: var(--font-head);
+  font-size: 0.75rem;
+  letter-spacing: 3px;
+  color: var(--blue-core);
+  margin-bottom: 1rem;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.panel-title-red { color: var(--red-glow); }
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 24px;
+  font-family: var(--font-head);
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  border: none; border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: rgba(255,255,255,0.05);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.btn:hover::after { opacity: 1; }
+
+.btn-primary {
+  background: linear-gradient(135deg, #0044aa, #0066cc);
+  color: #fff;
+  box-shadow: 0 0 20px rgba(0,102,204,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 0 35px rgba(0,170,255,0.6), inset 0 1px 0 rgba(255,255,255,0.15);
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #660011, #880022);
+  color: #ff9999;
+  box-shadow: 0 0 20px rgba(136,0,34,0.4);
+}
+
+.btn-danger:hover {
+  box-shadow: 0 0 35px rgba(204,34,0,0.6);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border-hot);
+  color: var(--blue-core);
+}
+
+.btn-ghost:hover {
+  background: rgba(0,170,255,0.08);
+  box-shadow: var(--shadow-b);
+}
+
+.btn-green {
+  background: linear-gradient(135deg, #004433, #006644);
+  color: var(--green-ok);
+  box-shadow: 0 0 20px rgba(0,255,136,0.2);
+}
+
+.btn-green:hover {
+  box-shadow: 0 0 35px rgba(0,255,136,0.4);
+  transform: translateY(-1px);
+}
+
+.btn-sm { padding: 6px 14px; font-size: 0.6rem; }
+.btn-lg { padding: 14px 36px; font-size: 0.85rem; }
+
+.btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none !important; }
+
+/* ============================================================
+   STATUS TAGS
+   ============================================================ */
+.tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 1px;
+}
+
+.tag-blue  { background: rgba(0,170,255,0.1); color: var(--blue-core); border: 1px solid rgba(0,170,255,0.3); }
+.tag-red   { background: rgba(204,34,0,0.1);  color: var(--red-glow);  border: 1px solid rgba(204,34,0,0.3); }
+.tag-green { background: rgba(0,255,136,0.08);color: var(--green-ok);  border: 1px solid rgba(0,255,136,0.3); }
+.tag-amber { background: rgba(255,170,0,0.08);color: var(--amber);     border: 1px solid rgba(255,170,0,0.3); }
+
+/* ============================================================
+   SECTION 1: BRIEFING
+   ============================================================ */
+.briefing-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.case-file-visual {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2rem;
+  position: relative;
+}
+
+.case-file-tape {
+  position: absolute;
+  top: -10px; left: 20px;
+  background: rgba(255,170,0,0.25);
+  border: 1px solid rgba(255,170,0,0.5);
+  color: var(--amber);
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  padding: 3px 12px;
+  letter-spacing: 3px;
+}
+
+.case-number-big {
+  font-family: var(--font-head);
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--red-glow);
+  text-shadow: 0 0 30px rgba(255,51,17,0.5);
+  letter-spacing: 6px;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.case-title-big {
+  font-family: var(--font-head);
+  font-size: 1rem;
+  color: var(--text-hi);
+  letter-spacing: 3px;
+  margin-bottom: 1.5rem;
+}
+
+.case-meta-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.case-meta-item label {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  color: var(--text-lo);
+  letter-spacing: 2px;
+  display: block; margin-bottom: 3px;
+}
+
+.case-meta-item span {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-mid);
+}
+
+.briefing-body { display: flex; flex-direction: column; gap: 1.5rem; }
+
+.brief-para {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: var(--text-mid);
+}
+
+.brief-para strong { color: var(--blue-core); }
+.brief-para em { color: var(--amber); font-style: normal; }
+
+.evidence-preview {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.evp-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  opacity: 0.4;
+}
+
+.evp-item.found {
+  opacity: 1;
+  border-color: var(--green-ok);
+  box-shadow: 0 0 12px rgba(0,255,136,0.15);
+}
+
+.evp-icon { font-size: 1.5rem; margin-bottom: 4px; }
+.evp-label { font-family: var(--font-mono); font-size: 0.55rem; color: var(--text-mid); }
+
+/* ============================================================
+   SECTION 2: CRIME SCENE
+   ============================================================ */
+.scene-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.crime-scene-canvas {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16/9;
+  min-height: 400px;
+}
+
+/* Scene room illustration */
+.scene-room {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(180deg, #050c18 0%, #0a1525 60%, #0d1a30 100%);
+}
+
+/* Floor */
+.scene-room::before {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 35%;
+  background: linear-gradient(180deg, #0a1828 0%, #071020 100%);
+  border-top: 2px solid rgba(0,170,255,0.1);
+}
+
+/* Lab tables */
+.lab-table {
+  position: absolute;
+  background: #0d1e35;
+  border: 1px solid rgba(0,170,255,0.15);
+  border-radius: 4px;
+}
+
+.scene-label {
+  position: absolute; bottom: 8px; left: 0; right: 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  color: var(--text-lo);
+  letter-spacing: 1px;
+}
+
+/* Evidence hotspot markers */
+.hotspot {
+  position: absolute;
+  width: 40px; height: 40px;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  z-index: 10;
+}
+
+.hotspot-ring {
+  width: 40px; height: 40px;
+  border: 2px solid var(--amber);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+  transition: all 0.3s;
+  animation: pulse-amber 2s infinite;
+  background: rgba(255,170,0,0.1);
+}
+
+@keyframes pulse-amber {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,170,0,0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(255,170,0,0); }
+}
+
+.hotspot:hover .hotspot-ring {
+  background: rgba(255,170,0,0.2);
+  transform: scale(1.15);
+  box-shadow: 0 0 20px rgba(255,170,0,0.5);
+}
+
+.hotspot.collected .hotspot-ring {
+  border-color: var(--green-ok);
+  background: rgba(0,255,136,0.1);
+  animation: pulse-green 2s infinite;
+}
+
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0,255,136,0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(0,255,136,0); }
+}
+
+.hotspot-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(7,13,26,0.95);
+  border: 1px solid var(--amber);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--amber);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 20;
+}
+
+.hotspot:hover .hotspot-tooltip { opacity: 1; }
+
+/* Evidence log sidebar */
+.evidence-log {
+  display: flex; flex-direction: column; gap: 1rem;
+}
+
+.ev-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+  opacity: 0.35;
+  transition: all 0.4s;
+}
+
+.ev-item.collected {
+  opacity: 1;
+  border-color: rgba(0,255,136,0.3);
+  box-shadow: 0 0 15px rgba(0,255,136,0.08);
+}
+
+.ev-item-header {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 6px;
+}
+
+.ev-icon { font-size: 1.2rem; }
+
+.ev-name {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-hi);
+  flex: 1;
+}
+
+.ev-id {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  color: var(--text-lo);
+}
+
+.ev-desc {
+  font-size: 0.75rem;
+  color: var(--text-mid);
+  line-height: 1.5;
+}
+
+/* ============================================================
+   SECTION 3: EVIDENCE LAB
+   ============================================================ */
+.lab-tabs {
+  display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;
+}
+
+.lab-tab {
+  padding: 8px 18px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-lo);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lab-tab.active {
+  background: rgba(0,102,204,0.15);
+  border-color: var(--blue-core);
+  color: var(--blue-core);
+  box-shadow: 0 0 12px rgba(0,170,255,0.15);
+}
+
+.lab-tab:hover:not(.active) {
+  border-color: rgba(0,170,255,0.3);
+  color: var(--text-mid);
+}
+
+.lab-content { display: none; }
+.lab-content.active { display: block; animation: fadeIn 0.3s ease; }
+
+/* Fingerprint scanner */
+.fp-layout {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;
+}
+
+.fp-scanner {
+  background: var(--bg-card);
+  border: 1px solid rgba(0,170,255,0.2);
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.fp-scanner-screen {
+  width: 160px; height: 200px;
+  margin: 0 auto 1rem;
+  background: #010a14;
+  border: 2px solid var(--blue-dim);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 4rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.fp-scanner-screen::before {
+  content: '';
+  position: absolute; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--blue-core), transparent);
+  top: -2px;
+  animation: scanline 2s linear infinite;
+  opacity: 0;
+}
+
+.fp-scanner-screen.scanning::before { opacity: 1; }
+@keyframes scanline { from { top: -2px; } to { top: 100%; } }
+
+.fp-scanner-screen.scanning {
+  border-color: var(--blue-core);
+  box-shadow: 0 0 20px rgba(0,170,255,0.3), inset 0 0 30px rgba(0,170,255,0.05);
+}
+
+.fp-match-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;
+}
+
+.fp-suspect-card {
+  background: var(--bg-panel);
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+}
+
+.fp-suspect-card:hover {
+  border-color: rgba(0,170,255,0.4);
+  transform: translateY(-2px);
+}
+
+.fp-suspect-card.match-yes {
+  border-color: var(--green-ok);
+  box-shadow: 0 0 20px rgba(0,255,136,0.2);
+}
+
+.fp-suspect-card.match-no {
+  border-color: rgba(204,34,0,0.5);
+  opacity: 0.5;
+}
+
+.fp-suspect-card.match-partial {
+  border-color: var(--amber);
+  box-shadow: 0 0 15px rgba(255,170,0,0.15);
+}
+
+.fp-avatar { font-size: 2.5rem; margin-bottom: 0.5rem; }
+.fp-name { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-hi); }
+
+/* DNA section */
+.dna-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 2rem; }
+
+.dna-helix-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex; flex-direction: column; align-items: center; gap: 1rem;
+}
+
+.dna-helix {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 6px;
+  padding: 1rem 0;
+}
+
+.dna-rung {
+  display: flex; align-items: center; gap: 4px;
+}
+
+.dna-base {
+  width: 28px; height: 12px; border-radius: 3px;
+  transition: all 0.3s;
+}
+
+.dna-bond {
+  width: 20px; height: 2px; background: rgba(255,255,255,0.1);
+}
+
+.base-A { background: #0055aa; box-shadow: 0 0 8px rgba(0,85,170,0.6); }
+.base-T { background: #aa0033; box-shadow: 0 0 8px rgba(170,0,51,0.6); }
+.base-G { background: #00aa55; box-shadow: 0 0 8px rgba(0,170,85,0.6); }
+.base-C { background: #aa8800; box-shadow: 0 0 8px rgba(170,136,0,0.6); }
+
+.dna-strand-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-lo);
+  letter-spacing: 2px;
+  margin-bottom: 0.5rem;
+}
+
+.dna-sequence-display {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  line-height: 1.8;
+  letter-spacing: 3px;
+  color: var(--text-mid);
+  word-break: break-all;
+}
+
+.dna-sequence-display .highlight-match {
+  color: var(--green-ok);
+  text-shadow: 0 0 8px rgba(0,255,136,0.4);
+  font-weight: bold;
+}
+
+.dna-result-panel {
+  display: flex; flex-direction: column; gap: 1rem;
+}
+
+.dna-match-bar {
+  height: 8px; border-radius: 4px;
+  background: var(--bg-void);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.dna-match-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1.5s cubic-bezier(0.22,1,0.36,1);
+  width: 0;
+}
+
+.fill-high  { background: linear-gradient(90deg, #006633, var(--green-ok)); box-shadow: 0 0 8px rgba(0,255,136,0.4); }
+.fill-med   { background: linear-gradient(90deg, #664400, var(--amber)); }
+.fill-low   { background: linear-gradient(90deg, #440011, var(--red-core)); }
+
+/* Blood analysis */
+.blood-layout { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+
+.blood-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(204,34,0,0.2);
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.blood-card:hover {
+  border-color: rgba(204,34,0,0.5);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-r);
+}
+
+.blood-card.revealed {
+  border-color: var(--red-glow);
+  box-shadow: 0 0 20px rgba(255,51,17,0.2);
+}
+
+.blood-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+.blood-name { font-family: var(--font-head); font-size: 0.75rem; letter-spacing: 2px; color: var(--text-hi); }
+.blood-detail {
+  font-size: 0.75rem; color: var(--text-mid); margin-top: 0.5rem;
+  display: none; line-height: 1.6;
+}
+
+.blood-card.revealed .blood-detail { display: block; }
+
+/* Toxicology */
+.tox-layout { display: flex; flex-direction: column; gap: 1.5rem; }
+
+.tox-spectrum {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.spectrum-chart {
+  display: flex; flex-direction: column; gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.spectrum-row {
+  display: flex; align-items: center; gap: 12px;
+}
+
+.spectrum-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-mid);
+  width: 120px; flex-shrink: 0;
+}
+
+.spectrum-bar-wrap {
+  flex: 1; height: 14px;
+  background: var(--bg-void);
+  border-radius: 7px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.spectrum-bar {
+  height: 100%; border-radius: 7px;
+  transition: width 1.2s cubic-bezier(0.22,1,0.36,1);
+  width: 0;
+}
+
+.spectrum-value {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-hi);
+  width: 50px; text-align: right;
+}
+
+/* ============================================================
+   SECTION 4: SUSPECTS
+   ============================================================ */
+.suspects-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem;
+}
+
+.suspect-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.suspect-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0,170,255,0.4);
+  box-shadow: var(--shadow-b);
+}
+
+.suspect-card.suspect-flagged {
+  border-color: var(--red-glow);
+  box-shadow: 0 0 25px rgba(255,51,17,0.2);
+}
+
+.suspect-card.suspect-cleared {
+  opacity: 0.45;
+  border-color: var(--text-lo);
+}
+
+.suspect-avatar-area {
+  padding: 1.5rem 1rem 1rem;
+  text-align: center;
+  background: var(--bg-card);
+  position: relative;
+}
+
+.suspect-avatar { font-size: 4rem; }
+
+.suspect-status-badge {
+  position: absolute; top: 8px; right: 8px;
+}
+
+.suspect-body { padding: 1rem; }
+
+.suspect-name {
+  font-family: var(--font-head);
+  font-size: 0.8rem;
+  letter-spacing: 2px;
+  color: var(--text-hi);
+  margin-bottom: 4px;
+}
+
+.suspect-role {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-lo);
+  margin-bottom: 0.75rem;
+}
+
+.suspect-stat-row {
+  display: flex; justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.suspect-stat-row:last-child { border-bottom: none; }
+
+.sstat-label { font-family: var(--font-mono); font-size: 0.55rem; color: var(--text-lo); }
+.sstat-val   { font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-mid); }
+.sstat-val.flagged { color: var(--red-glow); }
+
+.suspect-footer {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border);
+  display: flex; gap: 0.5rem;
+}
+
+/* ============================================================
+   SECTION 5: ANALYSIS
+   ============================================================ */
+.analysis-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+}
+
+.evidence-matrix {
+  overflow-x: auto;
+}
+
+.matrix-table {
+  width: 100%; border-collapse: collapse;
+  font-family: var(--font-mono); font-size: 0.65rem;
+}
+
+.matrix-table th {
+  background: var(--bg-void);
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  color: var(--text-lo);
+  letter-spacing: 1px;
+  font-weight: 400;
+}
+
+.matrix-table td {
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  color: var(--text-mid);
+  vertical-align: middle;
+}
+
+.matrix-table tr:hover td { background: rgba(0,170,255,0.03); }
+
+.matrix-cell-yes {
+  color: var(--green-ok) !important;
+  text-align: center;
+  font-size: 1rem;
+}
+
+.matrix-cell-no {
+  color: var(--red-core) !important;
+  text-align: center;
+  font-size: 1rem;
+}
+
+.matrix-cell-partial {
+  color: var(--amber) !important;
+  text-align: center;
+  font-size: 0.7rem;
+}
+
+.timeline-section { display: flex; flex-direction: column; gap: 0; }
+
+.timeline-event {
+  display: flex; gap: 1rem; padding: 0 0 1.5rem 0;
+  position: relative;
+  padding-left: 2rem;
+}
+
+.timeline-event::before {
+  content: '';
+  position: absolute; left: 8px; top: 20px; bottom: 0;
+  width: 1px; background: var(--border);
+}
+
+.timeline-event:last-child::before { display: none; }
+
+.timeline-dot {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid var(--blue-core);
+  background: var(--bg-dark);
+  position: absolute; left: 0; top: 4px;
+  flex-shrink: 0;
+  box-shadow: 0 0 10px rgba(0,170,255,0.4);
+}
+
+.timeline-dot.red { border-color: var(--red-glow); box-shadow: 0 0 10px rgba(255,51,17,0.4); }
+.timeline-dot.green { border-color: var(--green-ok); box-shadow: 0 0 10px rgba(0,255,136,0.3); }
+.timeline-dot.amber { border-color: var(--amber); box-shadow: 0 0 10px rgba(255,170,0,0.3); }
+
+.timeline-time {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-lo);
+  margin-bottom: 3px;
+}
+
+.timeline-text {
+  font-size: 0.8rem;
+  color: var(--text-mid);
+  line-height: 1.5;
+}
+
+.timeline-text strong { color: var(--text-hi); }
+
+/* Deduction board */
+.deduction-board {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.deduction-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: var(--bg-panel);
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.deduction-item:hover { border-color: rgba(0,170,255,0.3); }
+.deduction-item.selected { border-color: var(--blue-core); background: rgba(0,102,204,0.1); }
+
+.deduction-check {
+  width: 18px; height: 18px;
+  border: 2px solid var(--text-lo);
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.deduction-item.selected .deduction-check {
+  background: var(--blue-core);
+  border-color: var(--blue-core);
+  color: #fff;
+}
+
+.deduction-text {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-mid);
+}
+
+.deduction-item.selected .deduction-text { color: var(--text-hi); }
+
+/* ============================================================
+   SECTION 6: VERDICT
+   ============================================================ */
+.verdict-layout {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;
+}
+
+.verdict-form {
+  display: flex; flex-direction: column; gap: 1.5rem;
+}
+
+.verdict-select-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-lo);
+  letter-spacing: 2px;
+  margin-bottom: 0.5rem;
+}
+
+.verdict-suspect-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;
+}
+
+.verdict-suspect-btn {
+  padding: 1rem;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-mid);
+}
+
+.verdict-suspect-btn:hover {
+  border-color: rgba(0,170,255,0.4);
+  color: var(--text-hi);
+}
+
+.verdict-suspect-btn.selected {
+  border-color: var(--blue-core);
+  background: rgba(0,102,204,0.1);
+  color: var(--blue-core);
+  box-shadow: 0 0 15px rgba(0,170,255,0.15);
+}
+
+.verdict-result {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2rem;
+  display: none;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.verdict-result.show { display: block; animation: fadeIn 0.6s ease; }
+
+.verdict-result.correct {
+  border-color: var(--green-ok);
+  box-shadow: 0 0 40px rgba(0,255,136,0.15);
+}
+
+.verdict-result.incorrect {
+  border-color: var(--red-glow);
+  box-shadow: 0 0 40px rgba(255,51,17,0.15);
+}
+
+.verdict-big {
+  font-family: var(--font-head);
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: 6px;
+  margin-bottom: 1rem;
+}
+
+.verdict-correct-text { color: var(--green-ok); text-shadow: 0 0 20px rgba(0,255,136,0.5); }
+.verdict-incorrect-text { color: var(--red-glow); text-shadow: 0 0 20px rgba(255,51,17,0.5); }
+
+.verdict-explanation {
+  font-size: 0.85rem;
+  color: var(--text-mid);
+  line-height: 1.8;
+  text-align: left;
+  margin-top: 1rem;
+}
+
+.verdict-explanation strong { color: var(--text-hi); }
+
+.confetti-piece {
+  position: absolute;
+  width: 8px; height: 8px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(2,5,12,0.85);
+  backdrop-filter: blur(8px);
+  display: none; align-items: center; justify-content: center;
+  padding: 2rem;
+}
+
+.modal-overlay.open { display: flex; animation: fadeIn 0.2s ease; }
+
+.modal-box {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-hot);
+  border-radius: 10px;
+  padding: 2rem;
+  max-width: 540px; width: 100%;
+  box-shadow: 0 0 60px rgba(0,170,255,0.15), 0 30px 60px rgba(0,0,0,0.5);
+  position: relative;
+  max-height: 80vh; overflow-y: auto;
+}
+
+.modal-box::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--blue-core), transparent);
+}
+
+.modal-close {
+  position: absolute; top: 1rem; right: 1rem;
+  width: 28px; height: 28px;
+  background: rgba(0,170,255,0.1);
+  border: 1px solid rgba(0,170,255,0.3);
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-mid);
+  transition: all 0.2s;
+}
+
+.modal-close:hover { background: rgba(204,34,0,0.2); border-color: var(--red-core); color: var(--red-glow); }
+
+.modal-title {
+  font-family: var(--font-head);
+  font-size: 1rem;
+  letter-spacing: 3px;
+  color: var(--blue-core);
+  margin-bottom: 0.5rem;
+}
+
+.modal-subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-lo);
+  letter-spacing: 2px;
+  margin-bottom: 1.5rem;
+}
+
+.modal-body {
+  font-size: 0.85rem;
+  color: var(--text-mid);
+  line-height: 1.8;
+}
+
+.modal-body strong { color: var(--text-hi); }
+.modal-body em { color: var(--blue-core); font-style: normal; }
+.modal-body .red { color: var(--red-glow); }
+
+.modal-image-block {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+  margin: 1rem 0;
+  font-size: 3rem;
+  text-align: center;
+}
+
+.modal-fact-list {
+  display: flex; flex-direction: column; gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.modal-fact {
+  display: flex; gap: 8px; align-items: flex-start;
+  padding: 8px 10px;
+  background: var(--bg-void);
+  border-radius: 4px;
+  border-left: 2px solid var(--blue-dim);
+}
+
+.modal-fact-icon { flex-shrink: 0; margin-top: 1px; }
+.modal-fact-text { font-size: 0.78rem; color: var(--text-mid); line-height: 1.5; }
+
+/* ============================================================
+   NOTIFICATION TOAST
+   ============================================================ */
+.toast-container {
+  position: fixed; bottom: 2rem; right: 2rem; z-index: 2000;
+  display: flex; flex-direction: column; gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.toast {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-hot);
+  border-radius: 6px;
+  padding: 12px 18px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-hi);
+  box-shadow: var(--shadow-b);
+  display: flex; align-items: center; gap: 10px;
+  max-width: 340px;
+  animation: toastIn 0.3s ease;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.toast.out {
+  animation: toastOut 0.3s ease forwards;
+}
+
+@keyframes toastOut {
+  to { opacity: 0; transform: translateX(20px); }
+}
+
+.toast-red { border-color: rgba(204,34,0,0.5); }
+.toast-green { border-color: rgba(0,255,136,0.4); }
+.toast-amber { border-color: rgba(255,170,0,0.4); }
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+.flex-end { display: flex; justify-content: flex-end; margin-top: 1.5rem; }
+.flex-gap { display: flex; gap: 1rem; flex-wrap: wrap; }
+.mb-1 { margin-bottom: 0.75rem; }
+.mb-2 { margin-bottom: 1.5rem; }
+.mt-1 { margin-top: 0.75rem; }
+.mt-2 { margin-top: 1.5rem; }
+.text-mono { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-mid); }
+.text-head { font-family: var(--font-head); }
+.divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
+/* Blinking cursor */
+.blink {
+  animation: blink 1.2s step-end infinite;
+}
+
+@keyframes blink { 50% { opacity: 0; } }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-void); }
+::-webkit-scrollbar-thumb { background: var(--blue-dim); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--blue-glow); }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .briefing-hero, .scene-layout, .fp-layout, .dna-layout,
+  .analysis-grid, .verdict-layout, .suspects-grid { grid-template-columns: 1fr; }
+  .suspects-grid { grid-template-columns: 1fr 1fr; }
+  .evidence-preview { grid-template-columns: repeat(2, 1fr); }
+  .blood-layout { grid-template-columns: 1fr; }
+  .header-center { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+
+<!-- ============================================================
+     TOAST CONTAINER
+     ============================================================ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ============================================================
+     MODAL OVERLAY
+     ============================================================ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box" id="modalBox">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     TOP HEADER
+     ============================================================ -->
+<header class="top-header">
+  <div class="logo-block">
+    <div class="logo-icon">🔬</div>
+    <div>
+      <div class="logo-text">FORENSICLAB X</div>
+      <div class="logo-sub">BIOMEDICAL INVESTIGATION SYSTEM v4.1</div>
+    </div>
+  </div>
+
+  <div class="header-center">
+    <button class="phase-btn active" id="nav-briefing" onclick="goToSection('briefing')">01 BRIEFING</button>
+    <button class="phase-btn locked" id="nav-scene"    onclick="goToSection('scene')">02 SCENE</button>
+    <button class="phase-btn locked" id="nav-lab"      onclick="goToSection('lab')">03 LAB</button>
+    <button class="phase-btn locked" id="nav-suspects" onclick="goToSection('suspects')">04 SUSPECTS</button>
+    <button class="phase-btn locked" id="nav-analysis" onclick="goToSection('analysis')">05 ANALYSIS</button>
+    <button class="phase-btn locked" id="nav-verdict"  onclick="goToSection('verdict')">06 VERDICT</button>
+  </div>
+
+  <div class="header-right">
+    <span class="case-badge">CASE #BIO-2026-047</span>
+    <div class="progress-ring-wrap">
+      <svg viewBox="0 0 36 36" width="36" height="36">
+        <circle class="progress-ring-bg" cx="18" cy="18" r="15"/>
+        <circle class="progress-ring-fg" id="progressRing" cx="18" cy="18" r="15"/>
+      </svg>
+      <div class="progress-pct" id="progressPct">0%</div>
+    </div>
+  </div>
+</header>
+
+<div id="app">
+
+<!-- ============================================================
+     SECTION 1: BRIEFING
+     ============================================================ -->
+<section class="section active" id="section-briefing">
+  <div class="section-header">
+    <div>
+      <div class="section-title">CASE BRIEFING</div>
+      <div class="section-subtitle">// CONFIDENTIAL — BIOMEDICAL INVESTIGATION UNIT</div>
+    </div>
+    <div class="flex-gap" style="align-items:center;">
+      <span class="tag tag-red">● ACTIVE</span>
+      <span class="tag tag-amber">PRIORITY: HIGH</span>
+    </div>
+  </div>
+
+  <div class="briefing-hero">
+    <!-- Left: visual case file -->
+    <div class="case-file-visual">
+      <div class="case-file-tape">⚠ CLASSIFIED</div>
+      <div class="case-number-big">BIO-047</div>
+      <div class="case-title-big">THE STOLEN GENOME</div>
+      <div class="text-mono" style="line-height:1.6;margin-bottom:1rem;">
+        Unauthorized extraction of rare genetic research material from the 
+        <em style="color:var(--blue-core)">Northfield Biomedical Research Lab</em> 
+        during the night of May 9th, 2026.
+      </div>
+      <div class="flex-gap mb-2">
+        <span class="tag tag-red">THEFT</span>
+        <span class="tag tag-blue">DNA EVIDENCE</span>
+        <span class="tag tag-amber">FORENSIC PRIORITY</span>
+      </div>
+      <hr class="divider">
+      <div class="case-meta-grid">
+        <div class="case-meta-item">
+          <label>DATE REPORTED</label>
+          <span>May 10, 2026 — 07:14</span>
+        </div>
+        <div class="case-meta-item">
+          <label>LOCATION</label>
+          <span>Lab B, Sector 4-C</span>
+        </div>
+        <div class="case-meta-item">
+          <label>LEAD INVESTIGATOR</label>
+          <span>You (Student)</span>
+        </div>
+        <div class="case-meta-item">
+          <label>EVIDENCE COLLECTED</label>
+          <span id="evCount" style="color:var(--blue-core)">0 / 5</span>
+        </div>
+      </div>
+
+      <hr class="divider">
+      <div class="panel-title mb-1">EVIDENCE STATUS</div>
+      <div class="evidence-preview">
+        <div class="evp-item" id="evp-0"><div class="evp-icon">👆</div><div class="evp-label">FINGERPRINT</div></div>
+        <div class="evp-item" id="evp-1"><div class="evp-icon">🧬</div><div class="evp-label">DNA SAMPLE</div></div>
+        <div class="evp-item" id="evp-2"><div class="evp-icon">🩸</div><div class="evp-label">BLOOD TRACE</div></div>
+        <div class="evp-item" id="evp-3"><div class="evp-icon">📷</div><div class="evp-label">CAM FOOTAGE</div></div>
+        <div class="evp-item" id="evp-4"><div class="evp-icon">👣</div><div class="evp-label">FOOTPRINT</div></div>
+      </div>
+    </div>
+
+    <!-- Right: narrative briefing -->
+    <div class="briefing-body">
+      <div class="panel">
+        <div class="panel-title">📋 INCIDENT SUMMARY</div>
+        <p class="brief-para">
+          At approximately <strong>11:47 PM</strong> on May 9th, the security system at 
+          <em>Northfield Biomedical Research Lab</em> detected an unauthorized access event 
+          in Laboratory B, Sector 4-C. The laboratory houses critical genetic research 
+          including a <strong>one-of-a-kind synthesized genome sequence</strong> valued at 
+          over $2 million.
+        </p>
+        <p class="brief-para" style="margin-top:0.75rem;">
+          Upon arrival the following morning, Dr. Chen discovered that 
+          <strong>Cryo-Vial #G-447</strong> — containing the complete genome sequence — 
+          had been <em>removed from its storage chamber</em>. The perpetrator left behind 
+          multiple forensic traces.
+        </p>
+      </div>
+
+      <div class="panel panel-red">
+        <div class="panel-title panel-title-red">🎯 YOUR OBJECTIVE</div>
+        <p class="brief-para">
+          As the lead forensic investigator, your mission is to <strong>collect evidence</strong> 
+          from the crime scene, <strong>analyze forensic samples</strong> in the lab, 
+          <strong>review suspect profiles</strong>, and ultimately <strong>identify the perpetrator</strong>.
+        </p>
+        <div class="modal-fact-list mt-1">
+          <div class="modal-fact">
+            <div class="modal-fact-icon">🔍</div>
+            <div class="modal-fact-text">Examine the crime scene for physical evidence such as fingerprints, biological samples, and surveillance data.</div>
+          </div>
+          <div class="modal-fact">
+            <div class="modal-fact-icon">🧪</div>
+            <div class="modal-fact-text">Process evidence through forensic analysis including fingerprint scanning, DNA sequencing, and blood typing.</div>
+          </div>
+          <div class="modal-fact">
+            <div class="modal-fact-icon">🎯</div>
+            <div class="modal-fact-text">Cross-reference results with suspect profiles to determine who had motive, means, and opportunity.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">👥 FOUR SUSPECTS IDENTIFIED</div>
+        <div class="grid-2">
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:1.5rem">👨‍🔬</span>
+            <div>
+              <div class="text-mono" style="color:var(--text-hi);font-size:0.7rem;">DR. MARCUS HOLT</div>
+              <div class="text-mono" style="font-size:0.55rem;">Rival Researcher</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:1.5rem">👩‍💼</span>
+            <div>
+              <div class="text-mono" style="color:var(--text-hi);font-size:0.7rem;">NINA CROSS</div>
+              <div class="text-mono" style="font-size:0.55rem;">Lab Administrator</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 0">
+            <span style="font-size:1.5rem">👨‍💻</span>
+            <div>
+              <div class="text-mono" style="color:var(--text-hi);font-size:0.7rem;">KIRAN MEHTA</div>
+              <div class="text-mono" style="font-size:0.55rem;">IT Security Tech</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 0">
+            <span style="font-size:1.5rem">👩‍🔬</span>
+            <div>
+              <div class="text-mono" style="color:var(--text-hi);font-size:0.7rem;">DR. LEILA SHAW</div>
+              <div class="text-mono" style="font-size:0.55rem;">Lab Technician</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex-end">
+        <button class="btn btn-primary btn-lg" onclick="startInvestigation()">
+          🚨 BEGIN INVESTIGATION
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SECTION 2: CRIME SCENE
+     ============================================================ -->
+<section class="section" id="section-scene">
+  <div class="section-header">
+    <div>
+      <div class="section-title">CRIME SCENE</div>
+      <div class="section-subtitle">// LAB B — SECTOR 4-C — CLICK EVIDENCE MARKERS TO COLLECT</div>
+    </div>
+    <div class="flex-gap" style="align-items:center;">
+      <span class="tag tag-amber" id="collectedTag">COLLECTED: 0/5</span>
+      <button class="btn btn-ghost btn-sm" onclick="showModal('scene-info')">ℹ️ HOW TO COLLECT</button>
+    </div>
+  </div>
+
+  <div class="scene-layout">
+    <!-- Crime scene canvas -->
+    <div class="crime-scene-canvas">
+      <div class="scene-room">
+        <!-- Lab furniture (CSS drawn) -->
+        <div class="lab-table" style="bottom:30%;left:8%;width:28%;height:18%;"></div>
+        <div class="lab-table" style="bottom:30%;right:8%;width:28%;height:18%;"></div>
+        <div class="lab-table" style="bottom:30%;left:38%;width:24%;height:18%;"></div>
+        <!-- Cryo chamber (broken) -->
+        <div style="position:absolute;bottom:48%;left:60%;transform:translateX(-50%);
+             background:#050e1c;border:2px solid rgba(204,34,0,0.6);border-radius:6px;
+             width:90px;height:70px;display:flex;flex-direction:column;
+             align-items:center;justify-content:center;gap:4px;">
+          <span style="font-size:1.8rem;filter:grayscale(1)">🧊</span>
+          <span style="font-family:var(--font-mono);font-size:0.5rem;color:var(--red-glow)">BREACHED</span>
+        </div>
+        <!-- Security camera icon -->
+        <div style="position:absolute;top:8%;right:6%;font-size:1.5rem;">📷</div>
+        <!-- Window -->
+        <div style="position:absolute;top:10%;left:5%;width:12%;height:18%;
+             background:#02080f;border:3px solid #1a3a5a;border-radius:2px;
+             display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;">
+          <div style="background:#020c18;border:1px solid #0a2040;"></div>
+          <div style="background:#020c18;border:1px solid #0a2040;"></div>
+          <div style="background:#020c18;border:1px solid #0a2040;"></div>
+          <div style="background:#020c18;border:1px solid #0a2040;"></div>
+        </div>
+      </div>
+
+      <!-- Hotspot 1: Fingerprint on door handle -->
+      <div class="hotspot" id="hs-0" style="left:5%;top:62%;" onclick="collectEvidence(0)">
+        <div class="hotspot-ring">👆</div>
+        <div class="hotspot-tooltip">EVIDENCE: FINGERPRINT</div>
+      </div>
+
+      <!-- Hotspot 2: DNA sample near cryo unit -->
+      <div class="hotspot" id="hs-1" style="left:60%;top:45%;" onclick="collectEvidence(1)">
+        <div class="hotspot-ring">🧬</div>
+        <div class="hotspot-tooltip">EVIDENCE: DNA SAMPLE</div>
+      </div>
+
+      <!-- Hotspot 3: Blood trace on floor -->
+      <div class="hotspot" id="hs-2" style="left:42%;top:75%;" onclick="collectEvidence(2)">
+        <div class="hotspot-ring">🩸</div>
+        <div class="hotspot-tooltip">EVIDENCE: BLOOD TRACE</div>
+      </div>
+
+      <!-- Hotspot 4: Security camera -->
+      <div class="hotspot" id="hs-3" style="left:90%;top:12%;" onclick="collectEvidence(3)">
+        <div class="hotspot-ring">📷</div>
+        <div class="hotspot-tooltip">EVIDENCE: CAM FOOTAGE</div>
+      </div>
+
+      <!-- Hotspot 5: Footprint near window -->
+      <div class="hotspot" id="hs-4" style="left:18%;top:78%;" onclick="collectEvidence(4)">
+        <div class="hotspot-ring">👣</div>
+        <div class="hotspot-tooltip">EVIDENCE: FOOTPRINT</div>
+      </div>
+
+      <!-- Scene label -->
+      <div class="scene-label">LABORATORY B — NORTHFIELD BIOMEDICAL RESEARCH CENTER — SECTOR 4-C</div>
+    </div>
+
+    <!-- Evidence log -->
+    <div class="evidence-log">
+      <div class="panel-title">🗂️ EVIDENCE LOG</div>
+
+      <div class="ev-item" id="ev-0">
+        <div class="ev-item-header">
+          <div class="ev-icon">👆</div>
+          <div class="ev-name">LATENT FINGERPRINT</div>
+          <div class="ev-id">EV-001</div>
+        </div>
+        <div class="ev-desc">Partial fingerprint found on the magnetic door handle of Lab B entrance. Ridge patterns partially preserved.</div>
+        <div style="margin-top:8px;" id="ev-0-actions"></div>
+      </div>
+
+      <div class="ev-item" id="ev-1">
+        <div class="ev-item-header">
+          <div class="ev-icon">🧬</div>
+          <div class="ev-name">DNA SAMPLE</div>
+          <div class="ev-id">EV-002</div>
+        </div>
+        <div class="ev-desc">Skin cells collected from the cryo-vial door seal. Contains sufficient nuclear DNA for sequencing.</div>
+        <div style="margin-top:8px;" id="ev-1-actions"></div>
+      </div>
+
+      <div class="ev-item" id="ev-2">
+        <div class="ev-item-header">
+          <div class="ev-icon">🩸</div>
+          <div class="ev-name">BLOOD TRACE</div>
+          <div class="ev-id">EV-003</div>
+        </div>
+        <div class="ev-desc">Minute blood droplets found on lab floor near exit. Likely from a minor cut. Sufficient for blood typing and DNA.</div>
+        <div style="margin-top:8px;" id="ev-2-actions"></div>
+      </div>
+
+      <div class="ev-item" id="ev-3">
+        <div class="ev-item-header">
+          <div class="ev-icon">📷</div>
+          <div class="ev-name">SURVEILLANCE FOOTAGE</div>
+          <div class="ev-id">EV-004</div>
+        </div>
+        <div class="ev-desc">Camera recovered 4.7 seconds of degraded footage before being disabled. Shows partial figure in lab coat.</div>
+        <div style="margin-top:8px;" id="ev-3-actions"></div>
+      </div>
+
+      <div class="ev-item" id="ev-4">
+        <div class="ev-item-header">
+          <div class="ev-icon">👣</div>
+          <div class="ev-name">FOOTPRINT CAST</div>
+          <div class="ev-id">EV-005</div>
+        </div>
+        <div class="ev-desc">Shoe impression found in spilled reagent near lab window. Size 10 men's dress shoe, left foot. Partial tread.</div>
+        <div style="margin-top:8px;" id="ev-4-actions"></div>
+      </div>
+
+      <button class="btn btn-primary" id="proceedToLabBtn" disabled onclick="goToSection('lab')">
+        🔬 ANALYZE IN LAB →
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SECTION 3: EVIDENCE LAB
+     ============================================================ -->
+<section class="section" id="section-lab">
+  <div class="section-header">
+    <div>
+      <div class="section-title">FORENSIC LABORATORY</div>
+      <div class="section-subtitle">// RUN ANALYSIS ON COLLECTED EVIDENCE</div>
+    </div>
+    <div class="flex-gap" style="align-items:center;">
+      <span class="tag tag-blue" id="labProgressTag">ANALYSES: 0/4</span>
+    </div>
+  </div>
+
+  <div class="lab-tabs">
+    <button class="lab-tab active" onclick="switchLabTab('fingerprint')">🖐 FINGERPRINT ANALYSIS</button>
+    <button class="lab-tab" onclick="switchLabTab('dna')">🧬 DNA SEQUENCING</button>
+    <button class="lab-tab" onclick="switchLabTab('blood')">🩸 BLOOD ANALYSIS</button>
+    <button class="lab-tab" onclick="switchLabTab('toxicology')">⚗️ TRACE EVIDENCE</button>
+  </div>
+
+  <!-- Fingerprint Tab -->
+  <div class="lab-content active" id="lab-fingerprint">
+    <div class="fp-layout">
+      <div>
+        <div class="panel mb-2">
+          <div class="panel-title">🔬 FORENSIC BACKGROUND — FINGERPRINT ANALYSIS</div>
+          <p style="font-size:0.8rem;color:var(--text-mid);line-height:1.7;">
+            <strong style="color:var(--text-hi)">Fingerprint analysis</strong> is one of the oldest and most reliable forensic techniques. 
+            Every person has unique <strong style="color:var(--blue-core)">ridge patterns</strong> on their fingertips — composed of loops, whorls, and arches — 
+            that remain unchanged throughout life. Forensic examiners use a 12-point matching system 
+            to compare <em style="color:var(--amber)">latent prints</em> (found at scenes) with <em style="color:var(--amber)">known prints</em> (from suspects).
+          </p>
+          <div class="modal-fact-list mt-1">
+            <div class="modal-fact"><div class="modal-fact-icon">🔁</div><div class="modal-fact-text"><strong>Loop patterns</strong> — most common (~65%), ridges enter and exit from the same side</div></div>
+            <div class="modal-fact"><div class="modal-fact-icon">🌀</div><div class="modal-fact-text"><strong>Whorl patterns</strong> — (~30%), ridges form circular or spiral patterns</div></div>
+            <div class="modal-fact"><div class="modal-fact-icon">⌒</div><div class="modal-fact-text"><strong>Arch patterns</strong> — least common (~5%), ridges enter from one side and exit the other</div></div>
+          </div>
+        </div>
+        <div class="fp-scanner">
+          <div class="panel-title" style="justify-content:center;">EV-001: LATENT FINGERPRINT SCANNER</div>
+          <div class="fp-scanner-screen" id="fpScreen" onclick="runFingerprintScan()">
+            <span id="fpScreenIcon">☝️</span>
+          </div>
+          <div class="text-mono" style="text-align:center;margin-bottom:1rem;" id="fpStatus">
+            AWAITING SCAN — CLICK TO ANALYZE
+          </div>
+          <button class="btn btn-primary" onclick="runFingerprintScan()" id="fpScanBtn">
+            ⚡ RUN SCAN
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel-title mb-1">COMPARE AGAINST SUSPECT DATABASE</div>
+        <div class="fp-match-grid" id="fpMatchGrid">
+          <div class="fp-suspect-card" id="fp-holt">
+            <div class="fp-avatar">👨‍🔬</div>
+            <div class="fp-name">DR. MARCUS HOLT</div>
+            <div class="text-mono" style="font-size:0.55rem;color:var(--text-lo);margin-top:4px;">WHORL — TYPE III</div>
+            <div id="fp-holt-result" style="margin-top:8px;display:none;">
+              <span class="tag tag-green">NO MATCH</span>
+            </div>
+          </div>
+          <div class="fp-suspect-card" id="fp-cross">
+            <div class="fp-avatar">👩‍💼</div>
+            <div class="fp-name">NINA CROSS</div>
+            <div class="text-mono" style="font-size:0.55rem;color:var(--text-lo);margin-top:4px;">LOOP — TYPE I</div>
+            <div id="fp-cross-result" style="margin-top:8px;display:none;">
+              <span class="tag tag-amber">PARTIAL (7pt)</span>
+            </div>
+          </div>
+          <div class="fp-suspect-card" id="fp-mehta">
+            <div class="fp-avatar">👨‍💻</div>
+            <div class="fp-name">KIRAN MEHTA</div>
+            <div class="text-mono" style="font-size:0.55rem;color:var(--text-lo);margin-top:4px;">LOOP — TYPE II</div>
+            <div id="fp-mehta-result" style="margin-top:8px;display:none;">
+              <span class="tag tag-green">NO MATCH</span>
+            </div>
+          </div>
+          <div class="fp-suspect-card" id="fp-shaw">
+            <div class="fp-avatar">👩‍🔬</div>
+            <div class="fp-name">DR. LEILA SHAW</div>
+            <div class="text-mono" style="font-size:0.55rem;color:var(--text-lo);margin-top:4px;">ARCH — TYPE IV</div>
+            <div id="fp-shaw-result" style="margin-top:8px;display:none;">
+              <span class="tag tag-red">MATCH (11pt)</span>
+            </div>
+          </div>
+        </div>
+        <div id="fpConclusionBox" style="display:none;" class="panel mt-2">
+          <div class="panel-title">🔍 FINGERPRINT CONCLUSION</div>
+          <p class="text-mono" style="line-height:1.7;color:var(--text-mid);">
+            The latent fingerprint from the door handle shows an <strong style="color:var(--text-hi)">arch pattern with 11 matching ridge characteristics</strong> consistent with 
+            <strong style="color:var(--red-glow)">Dr. Leila Shaw's</strong> known prints. 
+            Nina Cross shows a 7-point partial match — <em style="color:var(--amber)">insufficient for positive ID</em>. 
+            This is significant forensic evidence.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DNA Tab -->
+  <div class="lab-content" id="lab-dna">
+    <div class="dna-layout">
+      <div>
+        <div class="panel mb-2">
+          <div class="panel-title">🔬 FORENSIC BACKGROUND — DNA SEQUENCING</div>
+          <p style="font-size:0.8rem;color:var(--text-mid);line-height:1.7;">
+            <strong style="color:var(--text-hi)">DNA profiling</strong> (also called DNA fingerprinting) analyzes 
+            <strong style="color:var(--blue-core)">Short Tandem Repeats (STRs)</strong> — specific locations in the genome where 
+            short sequences repeat. Since everyone (except identical twins) has unique STR patterns, 
+            DNA evidence can identify individuals with <em style="color:var(--green-ok)">near-certainty</em>. 
+            The FBI's <strong style="color:var(--text-hi)">CODIS</strong> system uses 20 STR loci.
+          </p>
+        </div>
+        <div class="dna-helix-wrap">
+          <div class="dna-strand-label">EV-002: DNA HELIX VISUALIZATION</div>
+          <div class="dna-helix" id="dnaHelix">
+            <!-- Generated by JS -->
+          </div>
+          <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-lo);text-align:center;">
+            SAMPLE STR SEQUENCE (LOCUS D3S1358)
+          </div>
+          <div class="dna-sequence-display" id="dnaSeqDisplay" style="margin-top:0.5rem;text-align:center;max-width:280px;">
+            <span id="dnaSeqText">-- AWAITING ANALYSIS --</span>
+          </div>
+          <button class="btn btn-primary mt-1" id="dnaRunBtn" onclick="runDNAAnalysis()">🧬 SEQUENCE DNA</button>
+        </div>
+      </div>
+      <div class="dna-result-panel">
+        <div class="panel-title">STR MATCH RESULTS — ALL LOCI</div>
+        <div id="dnaResultsContainer">
+          <p class="text-mono" style="color:var(--text-lo);">Run sequencing to see results...</p>
+        </div>
+        <div id="dnaConclusionBox" style="display:none;" class="panel panel-red mt-2">
+          <div class="panel-title panel-title-red">⚠️ DNA ANALYSIS CONCLUSION</div>
+          <p class="text-mono" style="line-height:1.7;color:var(--text-mid);">
+            DNA recovered from the cryo-vial seal shows a 
+            <strong style="color:var(--red-glow)">98.7% match</strong> to 
+            <strong style="color:var(--red-glow)">Dr. Leila Shaw</strong>'s reference sample. 
+            This places her in <em style="color:var(--amber)">direct physical contact</em> with the stolen vial.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Blood Tab -->
+  <div class="lab-content" id="lab-blood">
+    <div class="panel mb-2">
+      <div class="panel-title">🔬 FORENSIC BACKGROUND — BLOOD ANALYSIS</div>
+      <p style="font-size:0.8rem;color:var(--text-mid);line-height:1.7;">
+        Forensic blood analysis encompasses <strong style="color:var(--blue-core)">blood typing</strong> (ABO + Rh system), 
+        <strong style="color:var(--blue-core)">DNA extraction</strong> from white blood cells, and 
+        <strong style="color:var(--blue-core)">spatter pattern analysis</strong>. 
+        Blood type can narrow suspects while DNA from blood provides definitive identification. 
+        The ABO system has 4 types: <em style="color:var(--amber)">A, B, AB, and O</em>. 
+        Roughly 44% of the population is Type O.
+      </p>
+    </div>
+    <div class="panel-title mb-1">EV-003: BLOOD TRACE — CLICK EACH TEST TO REVEAL</div>
+    <div class="blood-layout">
+      <div class="blood-card" id="blood-0" onclick="revealBlood(0)">
+        <div class="blood-icon">🅰️</div>
+        <div class="blood-name">ABO TYPING</div>
+        <div class="blood-detail">Blood type identified: <strong style="color:var(--red-glow)">Type O Negative (O-)</strong>. This is one of the rarer blood types (~7% population). Eliminates suspects with blood type A or B.</div>
+        <div style="margin-top:0.75rem;"><span class="tag tag-red">CLICK TO TEST</span></div>
+      </div>
+      <div class="blood-card" id="blood-1" onclick="revealBlood(1)">
+        <div class="blood-icon">🔬</div>
+        <div class="blood-name">DNA EXTRACTION</div>
+        <div class="blood-detail">White blood cells extracted. DNA STR profile generated. <strong style="color:var(--green-ok)">Matches reference profile #LSH-2024</strong> — corroborates primary DNA sample from cryo-vial.</div>
+        <div style="margin-top:0.75rem;"><span class="tag tag-red">CLICK TO TEST</span></div>
+      </div>
+      <div class="blood-card" id="blood-2" onclick="revealBlood(2)">
+        <div class="blood-icon">💧</div>
+        <div class="blood-name">SPATTER ANALYSIS</div>
+        <div class="blood-detail">Three low-velocity droplets consistent with <strong style="color:var(--text-hi)">passive dripping</strong>. Directionality indicates subject was moving toward the exit. Cut likely sustained during forced entry to cryo-chamber.</div>
+        <div style="margin-top:0.75rem;"><span class="tag tag-red">CLICK TO TEST</span></div>
+      </div>
+    </div>
+    <div id="bloodSuspectInfo" style="display:none;" class="panel panel-red mt-2">
+      <div class="panel-title panel-title-red">🩸 BLOOD TYPE CROSS-REFERENCE</div>
+      <div class="grid-2">
+        <div>
+          <div class="text-mono" style="margin-bottom:0.5rem;color:var(--text-lo);">SUSPECT BLOOD TYPES (FROM EMPLOYEE RECORDS)</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div class="deduction-item"><span style="font-size:1rem">👨‍🔬</span><span class="text-mono">Dr. Marcus Holt — <strong style="color:var(--text-hi)">Type A+</strong></span><span class="tag tag-green" style="margin-left:auto">CLEARED</span></div>
+            <div class="deduction-item"><span style="font-size:1rem">👩‍💼</span><span class="text-mono">Nina Cross — <strong style="color:var(--text-hi)">Type B+</strong></span><span class="tag tag-green" style="margin-left:auto">CLEARED</span></div>
+            <div class="deduction-item"><span style="font-size:1rem">👨‍💻</span><span class="text-mono">Kiran Mehta — <strong style="color:var(--text-hi)">Type O+</strong></span><span class="tag tag-amber" style="margin-left:auto">POSSIBLE</span></div>
+            <div class="deduction-item" style="border-color:rgba(204,34,0,0.4);background:rgba(204,34,0,0.05)"><span style="font-size:1rem">👩‍🔬</span><span class="text-mono">Dr. Leila Shaw — <strong style="color:var(--red-glow)">Type O-</strong></span><span class="tag tag-red" style="margin-left:auto">MATCH</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="text-mono" style="margin-bottom:0.5rem;color:var(--text-lo);">CONCLUSION</div>
+          <p class="text-mono" style="line-height:1.8;color:var(--text-mid);">
+            The <strong style="color:var(--text-hi)">O-negative blood</strong> type eliminates Holt (A+) and Cross (B+). 
+            Both Mehta and Shaw have compatible types, but DNA analysis from the blood 
+            sample specifically matches <strong style="color:var(--red-glow)">Shaw's profile</strong>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trace Evidence Tab -->
+  <div class="lab-content" id="lab-toxicology">
+    <div class="tox-layout">
+      <div class="panel">
+        <div class="panel-title">🔬 FORENSIC BACKGROUND — TRACE EVIDENCE</div>
+        <p style="font-size:0.8rem;color:var(--text-mid);line-height:1.7;">
+          <strong style="color:var(--text-hi)">Trace evidence</strong> refers to small, often microscopic materials 
+          transferred between a criminal and a crime scene — following 
+          <strong style="color:var(--blue-core)">Locard's Exchange Principle</strong>: 
+          <em style="color:var(--amber)">"Every contact leaves a trace."</em> 
+          Examples include hair fibers, shoe tread analysis, glass fragments, soil samples, and chemical residues. 
+          Even a single fiber can link a suspect to a scene.
+        </p>
+      </div>
+      <div class="panel">
+        <div class="panel-title">EV-005: FOOTPRINT TREAD ANALYSIS</div>
+        <div class="tox-spectrum">
+          <div class="text-mono" style="color:var(--text-lo);margin-bottom:0.5rem;">SHOE CHARACTERISTICS (MEASURED VS SUSPECT DATABASE)</div>
+          <div class="spectrum-chart" id="spectrumChart">
+            <div class="spectrum-row">
+              <span class="spectrum-label">SIZE MATCH (Sz 10)</span>
+              <div class="spectrum-bar-wrap"><div class="spectrum-bar" data-width="92" style="background:linear-gradient(90deg,#006633,var(--green-ok))"></div></div>
+              <span class="spectrum-value" data-value="92%">—</span>
+            </div>
+            <div class="spectrum-row">
+              <span class="spectrum-label">TREAD PATTERN</span>
+              <div class="spectrum-bar-wrap"><div class="spectrum-bar" data-width="87" style="background:linear-gradient(90deg,#006633,var(--green-ok))"></div></div>
+              <span class="spectrum-value" data-value="87%">—</span>
+            </div>
+            <div class="spectrum-row">
+              <span class="spectrum-label">GAIT ANALYSIS</span>
+              <div class="spectrum-bar-wrap"><div class="spectrum-bar" data-width="78" style="background:linear-gradient(90deg,#664400,var(--amber))"></div></div>
+              <span class="spectrum-value" data-value="78%">—</span>
+            </div>
+            <div class="spectrum-row">
+              <span class="spectrum-label">WEAR PATTERN</span>
+              <div class="spectrum-bar-wrap"><div class="spectrum-bar" data-width="85" style="background:linear-gradient(90deg,#006633,var(--green-ok))"></div></div>
+              <span class="spectrum-value" data-value="85%">—</span>
+            </div>
+            <div class="spectrum-row">
+              <span class="spectrum-label">REAGENT CHEMICAL</span>
+              <div class="spectrum-bar-wrap"><div class="spectrum-bar" data-width="94" style="background:linear-gradient(90deg,#004488,var(--blue-core))"></div></div>
+              <span class="spectrum-value" data-value="94%">—</span>
+            </div>
+          </div>
+          <button class="btn btn-primary mt-2" id="traceRunBtn" onclick="runTraceAnalysis()">🔍 RUN TRACE ANALYSIS</button>
+        </div>
+      </div>
+      <div id="traceConclusionBox" style="display:none;" class="panel">
+        <div class="panel-title">👣 TRACE EVIDENCE CONCLUSION</div>
+        <p class="text-mono" style="line-height:1.7;color:var(--text-mid);">
+          Footprint belongs to a size <strong style="color:var(--text-hi)">10 shoe</strong> with a specific tread pattern consistent with 
+          <strong style="color:var(--text-hi)">Cole Haan dress shoes</strong> — the brand issued to lab personnel.
+          Reagent chemical residue matches <strong style="color:var(--red-glow)">Compound LB-7</strong> used exclusively in Shaw's research bay.
+          <strong style="color:var(--green-ok)">Locard's Principle confirmed:</strong> the subject was in this lab.
+        </p>
+        <button class="btn btn-primary mt-2" onclick="goToSection('suspects')">👥 REVIEW SUSPECTS →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SECTION 4: SUSPECTS
+     ============================================================ -->
+<section class="section" id="section-suspects">
+  <div class="section-header">
+    <div>
+      <div class="section-title">SUSPECT PROFILES</div>
+      <div class="section-subtitle">// 4 INDIVIDUALS OF INTEREST — CLICK FOR FULL PROFILE</div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="goToSection('analysis')">📊 GO TO ANALYSIS →</button>
+  </div>
+
+  <div class="suspects-grid">
+
+    <!-- Suspect 1: Dr. Marcus Holt -->
+    <div class="suspect-card" id="sc-holt" onclick="showSuspectModal('holt')">
+      <div class="suspect-avatar-area">
+        <div class="suspect-avatar">👨‍🔬</div>
+        <div class="suspect-status-badge"><span class="tag tag-green" id="holt-status">CLEARED</span></div>
+      </div>
+      <div class="suspect-body">
+        <div class="suspect-name">DR. MARCUS HOLT</div>
+        <div class="suspect-role">RIVAL RESEARCHER — BIOSYNTH INC.</div>
+        <div class="suspect-stat-row"><span class="sstat-label">AGE</span><span class="sstat-val">48</span></div>
+        <div class="suspect-stat-row"><span class="sstat-label">ACCESS LEVEL</span><span class="sstat-val">VISITOR — LIMITED</span></div>
+        <div class="suspect-stat-row"><span class="sstat-label">ALIBI</span><span class="sstat-val">HOTEL KEYCARD: 11:12PM</span></div>
+        <div class="suspect-stat-row"><span class="sstat-label">BLOOD TYPE</span><span class="sstat-val">A+</span></div>
+        <div class="suspect-stat-row"><span class="sstat-label">FP MATCH</span><span class="sstat-val">NEGATIVE</span></div>
+        <div class="suspect-stat-row"><span class="sstat-label">DNA MATCH</span><span class="sstat-val">NEGATIVE</span></div>
+      </div>
+      <div class="suspect-footer">
+        <button class="btn btn-ghost btn-sm" onclick="showSuspectModal('holt');event.stopPropagation()">📋 PROFILE</button>
+        <button class="btn btn-sm" style="background:rgba(0,80,0,0.3);border:1px solid rgba(0,255,136,0.3);color:var(--green-ok);font-family:var(--font-head);font-size:0.55rem;letter-spacing:1px;" onclick="event.stopPropagation()">✓ CLEARED</button>
+      </div>
+    </div>
+
+    <!-- Suspect 2: Nina Cross -->
+    <div class="suspect-card" id="sc-cross" onclick="showSuspectModal('cross')">
+      <div class="suspect-avatar-area">
+        <div class="suspect-avatar">👩‍💼</div>
+        <div class="suspect-status-badge"><span class="tag tag-amber" id="cross-status">PERSON OF INTEREST</span></div>
+      </div>
+      <div class="suspect-body">
+        <div class="suspect-name">NINA CROSS</div>
+        <div class="suspect-role">LAB ADMINISTRATOR — NORTHFIELD LAB</div>
+        <div class="suspect-stat-row"><span class="sstat-label">AGE</span><span class="sstat-val">35</span></div>
+        <div class="suspect-stat-row"><span class="sstat-label">ACCESS LEVEL</span><span class="sstat-val">LEVEL 3 — FULL</span></div>
+        <div class="suspect-stat-row"><span class="sstat-label">ALIBI</span><span class="sstat-val">UNVERIFIED</span></div>
+        <div class="suspect-stat-row"><span class="sstat-label">BLOOD TYPE</span><span class="sstat-val">B+</span></div>
+        <div class="suspect-stat-row"><span class="sstat-label">FP MATCH</span><span class="sstat-val sstat-flagged">PARTIAL (7pt)</span></div>
+        <div class="suspect-stat-row"><span class="sstat-label">DNA MATCH</span><span class="sstat-val">NEGATIVE</span></div>
+      </div>
+      <div class="suspect-footer">
+        <button class="btn btn-ghost btn-sm" onclick="showSuspectModal('cross');event.stopPropagation()">📋 PROFILE</button>
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation()">⚠ PERSON OF INT.</button>
+      </div>
+    </div>
+
+    <!-- Suspect 3: Kiran Mehta -->
+    <div class="suspect-card" id="sc-mehta" onclick="showSuspectModal('mehta')">
+      <div class="suspect-avatar-area">
+        <div class="suspect-avatar">👨‍💻</div>
+        <div class="suspect-status-badge"><span class="tag tag-green" id="mehta-status">CLEARED</span></div>
+      </div>
+      <div class="suspect-body">
+        <div class="suspect-name">KIRAN MEHTA</div>
+        <div class="suspect-role">IT SECURITY TECH — NORTHFIELD LAB</div>
+        <div class="suspect-stat-row"><span class="sstat-label">AGE</span><span class="sstat-val">29</span></div>
+        <div class="suspect-stat-row"><span class="sstat-label">ACCESS LEVEL</span><span class="sstat-val">LEVEL 2 — SYSTEMS</span></div>
+        <div class="suspect-stat-row"><span class="sstat-label">ALIBI</span><span class="sstat-val">PING LOG: 11:44PM</span></div>
+        <div class="suspect-stat-row"><span class="sstat-label">BLOOD TYPE</span><span class="sstat-val">O+</span></div>
+        <div class="suspect-stat-row"><span class="sstat-label">FP MATCH</span><span class="sstat-val">NEGATIVE</span></div>
+        <div class="suspect-stat-row"><span class="sstat-label">DNA MATCH</span><span class="sstat-val">NEGATIVE</span></div>
+      </div>
+      <div class="suspect-footer">
+        <button class="btn btn-ghost btn-sm" onclick="showSuspectModal('mehta');event.stopPropagation()">📋 PROFILE</button>
+        <button class="btn btn-sm" style="background:rgba(0,80,0,0.3);border:1px solid rgba(0,255,136,0.3);color:var(--green-ok);font-family:var(--font-head);font-size:0.55rem;letter-spacing:1px;" onclick="event.stopPropagation()">✓ CLEARED</button>
+      </div>
+    </div>
+
+    <!-- Suspect 4: Dr. Leila Shaw -->
+    <div class="suspect-card suspect-flagged" id="sc-shaw" onclick="showSuspectModal('shaw')">
+      <div class="suspect-avatar-area" style="background:rgba(80,0,20,0.2);">
+        <div class="suspect-avatar">👩‍🔬</div>
+        <div class="suspect-status-badge"><span class="tag tag-red" id="shaw-status">PRIMARY SUSPECT</span></div>
+      </div>
+      <div class="suspect-body">
+        <div class="suspect-name">DR. LEILA SHAW</div>
+        <div class="suspect-role">LAB TECHNICIAN — GENOMICS DEPT.</div>
+        <div class="suspect-stat-row"><span class="sstat-label">AGE</span><span class="sstat-val">41</span></div>
+        <div class="suspect-stat-row"><span class="sstat-label">ACCESS LEVEL</span><span class="sstat-val sstat-flagged">LEVEL 4 — UNRESTRICTED</span></div>
+        <div class="suspect-stat-row"><span class="sstat-label">ALIBI</span><span class="sstat-val sstat-flagged">NONE — UNACCOUNTED</span></div>
+        <div class="suspect-stat-row"><span class="sstat-label">BLOOD TYPE</span><span class="sstat-val sstat-flagged">O- ← MATCH</span></div>
+        <div class="suspect-stat-row"><span class="sstat-label">FP MATCH</span><span class="sstat-val sstat-flagged">11-POINT MATCH ⚠</span></div>
+        <div class="suspect-stat-row"><span class="sstat-label">DNA MATCH</span><span class="sstat-val sstat-flagged">98.7% MATCH ⚠</span></div>
+      </div>
+      <div class="suspect-footer">
+        <button class="btn btn-ghost btn-sm" onclick="showSuspectModal('shaw');event.stopPropagation()">📋 PROFILE</button>
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation()">🚨 PRIMARY SUSPECT</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================
+     SECTION 5: ANALYSIS
+     ============================================================ -->
+<section class="section" id="section-analysis">
+  <div class="section-header">
+    <div>
+      <div class="section-title">CASE ANALYSIS</div>
+      <div class="section-subtitle">// CROSS-REFERENCE EVIDENCE — BUILD YOUR CASE</div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="goToSection('verdict')">⚖️ PROCEED TO VERDICT →</button>
+  </div>
+
+  <div class="analysis-grid mb-2">
+    <!-- Evidence Matrix -->
+    <div class="panel">
+      <div class="panel-title">📊 EVIDENCE MATRIX</div>
+      <div class="evidence-matrix">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th>EVIDENCE</th>
+              <th>HOLT</th>
+              <th>CROSS</th>
+              <th>MEHTA</th>
+              <th>SHAW</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>👆 Fingerprint</td>
+              <td class="matrix-cell-no">✗</td>
+              <td class="matrix-cell-partial">~</td>
+              <td class="matrix-cell-no">✗</td>
+              <td class="matrix-cell-yes">✓</td>
+            </tr>
+            <tr>
+              <td>🧬 DNA Sample</td>
+              <td class="matrix-cell-no">✗</td>
+              <td class="matrix-cell-no">✗</td>
+              <td class="matrix-cell-no">✗</td>
+              <td class="matrix-cell-yes">✓</td>
+            </tr>
+            <tr>
+              <td>🩸 Blood Type</td>
+              <td class="matrix-cell-no">✗</td>
+              <td class="matrix-cell-no">✗</td>
+              <td class="matrix-cell-partial">~</td>
+              <td class="matrix-cell-yes">✓</td>
+            </tr>
+            <tr>
+              <td>👣 Footprint</td>
+              <td class="matrix-cell-no">✗</td>
+              <td class="matrix-cell-no">✗</td>
+              <td class="matrix-cell-partial">~</td>
+              <td class="matrix-cell-yes">✓</td>
+            </tr>
+            <tr>
+              <td>📷 Cam Footage</td>
+              <td class="matrix-cell-no">✗</td>
+              <td class="matrix-cell-partial">~</td>
+              <td class="matrix-cell-no">✗</td>
+              <td class="matrix-cell-yes">✓</td>
+            </tr>
+            <tr>
+              <td>🔑 Lab Access</td>
+              <td class="matrix-cell-no">✗</td>
+              <td class="matrix-cell-partial">~</td>
+              <td class="matrix-cell-partial">~</td>
+              <td class="matrix-cell-yes">✓</td>
+            </tr>
+            <tr>
+              <td>📅 No Alibi</td>
+              <td class="matrix-cell-no">✗</td>
+              <td class="matrix-cell-partial">~</td>
+              <td class="matrix-cell-no">✗</td>
+              <td class="matrix-cell-yes">✓</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="text-mono mt-1" style="font-size:0.6rem;color:var(--text-lo);">
+          ✓ = CONFIRMED MATCH &nbsp;&nbsp; ~ = PARTIAL / POSSIBLE &nbsp;&nbsp; ✗ = ELIMINATED
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="panel">
+      <div class="panel-title">⏱ INCIDENT TIMELINE</div>
+      <div class="timeline-section">
+        <div class="timeline-event">
+          <div class="timeline-dot blue"></div>
+          <div>
+            <div class="timeline-time">MAY 9 — 06:00 PM</div>
+            <div class="timeline-text">Dr. Chen <strong>secures Cryo-Vial #G-447</strong> in Lab B storage unit. Security seal intact. All authorized personnel log out.</div>
+          </div>
+        </div>
+        <div class="timeline-event">
+          <div class="timeline-dot amber"></div>
+          <div>
+            <div class="timeline-time">MAY 9 — 11:44 PM</div>
+            <div class="timeline-text"><strong>IT system shows a ping</strong> from Mehta's workstation — he is working remotely. This creates his digital alibi for the time of incident.</div>
+          </div>
+        </div>
+        <div class="timeline-event">
+          <div class="timeline-dot red"></div>
+          <div>
+            <div class="timeline-time">MAY 9 — 11:47 PM</div>
+            <div class="timeline-text"><strong>Security system detects unauthorized access</strong> in Lab B. Camera feed begins recording before being disabled 4.7 seconds later.</div>
+          </div>
+        </div>
+        <div class="timeline-event">
+          <div class="timeline-dot red"></div>
+          <div>
+            <div class="timeline-time">MAY 9 — 11:52 PM</div>
+            <div class="timeline-text"><strong>Motion sensor triggered</strong> near Lab B exit. Subject exiting the building. Blood droplets later collected from this location.</div>
+          </div>
+        </div>
+        <div class="timeline-event">
+          <div class="timeline-dot amber"></div>
+          <div>
+            <div class="timeline-time">MAY 10 — 07:14 AM</div>
+            <div class="timeline-text">Dr. Chen discovers the breach. <strong>Cryo-Vial #G-447 is missing.</strong> Emergency forensics team dispatched.</div>
+          </div>
+        </div>
+        <div class="timeline-event">
+          <div class="timeline-dot green"></div>
+          <div>
+            <div class="timeline-time">MAY 10 — 09:30 AM</div>
+            <div class="timeline-text"><strong>You begin your investigation.</strong> Multiple pieces of forensic evidence collected and analyzed.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deduction Board -->
+  <div class="panel mb-2">
+    <div class="panel-title">🧩 DEDUCTION BOARD — SELECT ALL CONCLUSIONS YOU AGREE WITH</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:0.5rem;" id="deductionBoard">
+      <div class="deduction-item" onclick="toggleDeduction(this)">
+        <div class="deduction-check">✓</div>
+        <div class="deduction-text">The fingerprint on the door handle is a confirmed 11-point match for Dr. Leila Shaw</div>
+      </div>
+      <div class="deduction-item" onclick="toggleDeduction(this)">
+        <div class="deduction-check">✓</div>
+        <div class="deduction-text">DNA extracted from the cryo-vial seal matches Shaw's reference at 98.7%</div>
+      </div>
+      <div class="deduction-item" onclick="toggleDeduction(this)">
+        <div class="deduction-check">✓</div>
+        <div class="deduction-text">Blood type O- at the scene eliminates Holt (A+) and Cross (B+)</div>
+      </div>
+      <div class="deduction-item" onclick="toggleDeduction(this)">
+        <div class="deduction-check">✓</div>
+        <div class="deduction-text">Trace chemical LB-7 in footprint is exclusively used in Shaw's research bay</div>
+      </div>
+      <div class="deduction-item" onclick="toggleDeduction(this)">
+        <div class="deduction-check">✓</div>
+        <div class="deduction-text">Shaw had Level 4 unrestricted access — including the cryo storage unit</div>
+      </div>
+      <div class="deduction-item" onclick="toggleDeduction(this)">
+        <div class="deduction-check">✓</div>
+        <div class="deduction-text">Shaw has no alibi for 11:30 PM – 12:30 AM on the night of the theft</div>
+      </div>
+      <div class="deduction-item" onclick="toggleDeduction(this)">
+        <div class="deduction-check">✓</div>
+        <div class="deduction-text">Surveillance footage shows a figure matching Shaw's build and lab coat style</div>
+      </div>
+      <div class="deduction-item" onclick="toggleDeduction(this)">
+        <div class="deduction-check">✓</div>
+        <div class="deduction-text">Mehta's digital alibi and Holt's hotel keycard log place them elsewhere at the time</div>
+      </div>
+    </div>
+    <div class="flex-end">
+      <span class="text-mono" id="deductionCount" style="margin-right:1rem;">0/8 conclusions marked</span>
+      <button class="btn btn-primary" onclick="goToSection('verdict')">⚖️ BUILD FINAL VERDICT →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SECTION 6: VERDICT
+     ============================================================ -->
+<section class="section" id="section-verdict">
+  <div class="section-header">
+    <div>
+      <div class="section-title">FINAL VERDICT</div>
+      <div class="section-subtitle">// SELECT THE PERPETRATOR AND SUBMIT YOUR CONCLUSION</div>
+    </div>
+    <span class="tag tag-red blink">⚖ AWAITING VERDICT</span>
+  </div>
+
+  <div class="verdict-layout">
+    <div class="verdict-form">
+      <div class="panel">
+        <div class="panel-title">📋 CASE SUMMARY</div>
+        <p style="font-size:0.82rem;color:var(--text-mid);line-height:1.8;">
+          You have collected <strong style="color:var(--blue-core)">5 pieces of evidence</strong>, conducted 
+          <strong style="color:var(--blue-core)">4 forensic analyses</strong>, and reviewed 
+          <strong style="color:var(--blue-core)">4 suspect profiles</strong>. 
+          Based on the forensic evidence, select the individual you believe 
+          is responsible for the theft of Cryo-Vial #G-447.
+        </p>
+      </div>
+
+      <div>
+        <div class="verdict-select-label">SELECT THE PERPETRATOR:</div>
+        <div class="verdict-suspect-grid">
+          <div class="verdict-suspect-btn" id="vs-holt" onclick="selectVerdictSuspect('holt')">
+            <div style="font-size:2rem">👨‍🔬</div>
+            <div style="margin-top:4px;color:var(--text-hi)">DR. MARCUS HOLT</div>
+            <div style="font-size:0.55rem;color:var(--text-lo);margin-top:2px;">Rival Researcher</div>
+          </div>
+          <div class="verdict-suspect-btn" id="vs-cross" onclick="selectVerdictSuspect('cross')">
+            <div style="font-size:2rem">👩‍💼</div>
+            <div style="margin-top:4px;color:var(--text-hi)">NINA CROSS</div>
+            <div style="font-size:0.55rem;color:var(--text-lo);margin-top:2px;">Lab Administrator</div>
+          </div>
+          <div class="verdict-suspect-btn" id="vs-mehta" onclick="selectVerdictSuspect('mehta')">
+            <div style="font-size:2rem">👨‍💻</div>
+            <div style="margin-top:4px;color:var(--text-hi)">KIRAN MEHTA</div>
+            <div style="font-size:0.55rem;color:var(--text-lo);margin-top:2px;">IT Security Tech</div>
+          </div>
+          <div class="verdict-suspect-btn" id="vs-shaw" onclick="selectVerdictSuspect('shaw')">
+            <div style="font-size:2rem">👩‍🔬</div>
+            <div style="margin-top:4px;color:var(--text-hi)">DR. LEILA SHAW</div>
+            <div style="font-size:0.55rem;color:var(--text-lo);margin-top:2px;">Lab Technician</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="verdict-select-label">CONFIDENCE LEVEL:</div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;" id="confidenceBtns">
+          <button class="btn btn-ghost btn-sm" onclick="selectConfidence(this,'moderate')">MODERATE (60-79%)</button>
+          <button class="btn btn-ghost btn-sm" onclick="selectConfidence(this,'high')">HIGH (80-94%)</button>
+          <button class="btn btn-ghost btn-sm" onclick="selectConfidence(this,'certain')">CERTAIN (95-100%)</button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-lg" id="submitVerdictBtn" onclick="submitVerdict()" disabled>
+        ⚖️ SUBMIT FINAL VERDICT
+      </button>
+    </div>
+
+    <!-- Verdict result panel -->
+    <div>
+      <div class="verdict-result" id="verdictResult">
+        <div class="verdict-big" id="verdictBigText"></div>
+        <div id="verdictResultBody"></div>
+      </div>
+
+      <div class="panel" id="verdictSummaryPanel">
+        <div class="panel-title">🔬 FORENSIC SCIENCE TAKEAWAYS</div>
+        <div class="modal-fact-list">
+          <div class="modal-fact">
+            <div class="modal-fact-icon">👆</div>
+            <div class="modal-fact-text"><strong>Fingerprint Analysis</strong> — Ridge patterns are unique and permanent. Used since the 1890s, still one of the most powerful forensic tools.</div>
+          </div>
+          <div class="modal-fact">
+            <div class="modal-fact-icon">🧬</div>
+            <div class="modal-fact-text"><strong>DNA Profiling</strong> — Developed in 1984 by Sir Alec Jeffreys. STR analysis can identify individuals with 1-in-quintillion probability of false match.</div>
+          </div>
+          <div class="modal-fact">
+            <div class="modal-fact-icon">🩸</div>
+            <div class="modal-fact-text"><strong>Blood Typing</strong> — ABO system discovered by Karl Landsteiner in 1901. Blood type alone can't identify an individual but can eliminate suspects.</div>
+          </div>
+          <div class="modal-fact">
+            <div class="modal-fact-icon">👣</div>
+            <div class="modal-fact-text"><strong>Locard's Exchange Principle</strong> — "Every contact leaves a trace." Every criminal brings something to and takes something from the scene.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div><!-- /#app -->
+
+<script>
+/* ============================================================
+   GLOBAL STATE
+   ============================================================ */
+const state = {
+  evidenceCollected: [false, false, false, false, false],
+  fpScanned: false,
+  dnaRun: false,
+  bloodRevealed: [false, false, false],
+  traceRun: false,
+  labAnalyses: 0,
+  unlockedSections: ['briefing'],
+  selectedSuspect: null,
+  selectedConfidence: null,
+  deductionsSelected: 0,
+  progress: 0
+};
+
+const CORRECT_SUSPECT = 'shaw';
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+function goToSection(name) {
+  if (!state.unlockedSections.includes(name)) {
+    showToast('🔒 Complete previous steps first', 'toast-red');
+    return;
+  }
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+
+  document.querySelectorAll('.phase-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('nav-' + name).classList.add('active');
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function unlockSection(name) {
+  if (!state.unlockedSections.includes(name)) {
+    state.unlockedSections.push(name);
+    const btn = document.getElementById('nav-' + name);
+    btn.classList.remove('locked');
+    showToast('🔓 Section unlocked: ' + name.toUpperCase(), 'toast-green');
+  }
+}
+
+/* ============================================================
+   PROGRESS TRACKER
+   ============================================================ */
+function updateProgress() {
+  const total = 12; // milestones
+  let done = 0;
+  done += state.evidenceCollected.filter(Boolean).length; // 0-5
+  if (state.fpScanned) done++;
+  if (state.dnaRun) done++;
+  if (state.bloodRevealed.filter(Boolean).length === 3) done++;
+  if (state.traceRun) done++;
+  if (state.unlockedSections.includes('suspects')) done++;
+  if (state.unlockedSections.includes('verdict')) done++;
+  if (state.selectedSuspect) done++;
+
+  state.progress = Math.round((done / total) * 100);
+
+  const circumference = 2 * Math.PI * 15;
+  const ring = document.getElementById('progressRing');
+  const offset = circumference - (state.progress / 100) * circumference;
+  ring.style.strokeDasharray = circumference;
+  ring.style.strokeDashoffset = offset;
+  document.getElementById('progressPct').textContent = state.progress + '%';
+}
+
+/* ============================================================
+   SECTION 1: START
+   ============================================================ */
+function startInvestigation() {
+  unlockSection('scene');
+  goToSection('scene');
+  showToast('🔍 Investigation started! Examine the crime scene.', 'toast-amber');
+  updateProgress();
+}
+
+/* ============================================================
+   SECTION 2: CRIME SCENE
+   ============================================================ */
+const evidenceData = [
+  { id: 0, title: 'LATENT FINGERPRINT', desc: 'Partial fingerprint on door handle. Ridge detail preserved. Sending to fingerprint analysis.', icon: '👆', modal: 'ev-fp' },
+  { id: 1, title: 'DNA SAMPLE',         desc: 'Skin cells from cryo-vial seal. High-quality nuclear DNA extracted.', icon: '🧬', modal: 'ev-dna' },
+  { id: 2, title: 'BLOOD TRACE',        desc: 'Type O- blood droplets near exit. Consistent with passive drip pattern.', icon: '🩸', modal: 'ev-blood' },
+  { id: 3, title: 'CAM FOOTAGE',        desc: '4.7 sec clip showing partial figure in white lab coat. Height ~5\'7"–5\'9".', icon: '📷', modal: 'ev-cam' },
+  { id: 4, title: 'FOOTPRINT CAST',     desc: 'Size 10 shoe, dress tread. Reagent chemical LB-7 residue present.', icon: '👣', modal: 'ev-foot' },
+];
+
+function collectEvidence(id) {
+  if (state.evidenceCollected[id]) {
+    showModal(evidenceData[id].modal);
+    return;
+  }
+
+  state.evidenceCollected[id] = true;
+
+  // Mark hotspot
+  document.getElementById('hs-' + id).classList.add('collected');
+
+  // Mark evidence log item
+  document.getElementById('ev-' + id).classList.add('collected');
+
+  // Add analyze button
+  document.getElementById('ev-' + id + '-actions').innerHTML =
+    `<span class="tag tag-green">✓ COLLECTED</span>`;
+
+  // Mark briefing preview
+  document.getElementById('evp-' + id).classList.add('found');
+
+  // Update count
+  const total = state.evidenceCollected.filter(Boolean).length;
+  document.getElementById('evCount').textContent = total + ' / 5';
+  document.getElementById('collectedTag').textContent = 'COLLECTED: ' + total + '/5';
+
+  showToast('📦 Evidence collected: ' + evidenceData[id].title, 'toast-green');
+  showModal(evidenceData[id].modal);
+
+  if (total === 5) {
+    document.getElementById('proceedToLabBtn').disabled = false;
+    unlockSection('lab');
+    showToast('✅ All evidence collected! Proceed to the Forensic Lab.', 'toast-green');
+  }
+
+  updateProgress();
+}
+
+/* ============================================================
+   SECTION 3: EVIDENCE LAB
+   ============================================================ */
+function switchLabTab(tab) {
+  document.querySelectorAll('.lab-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.lab-content').forEach(c => c.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('lab-' + tab).classList.add('active');
+
+  // Trigger animations for spectrum chart
+  if (tab === 'toxicology') {
+    setTimeout(animateSpectrumOnView, 100);
+  }
+  if (tab === 'dna') {
+    buildDNAHelix();
+  }
+}
+
+// Fingerprint scan
+let fpDone = false;
+function runFingerprintScan() {
+  if (fpDone) return;
+  fpDone = true;
+  state.fpScanned = true;
+
+  const screen = document.getElementById('fpScreen');
+  const status = document.getElementById('fpStatus');
+  const btn = document.getElementById('fpScanBtn');
+
+  screen.classList.add('scanning');
+  screen.innerHTML = `<span style="font-size:2rem;opacity:0.5;">🔄</span>`;
+  status.innerHTML = `<span style="color:var(--blue-core)">SCANNING...</span> <span class="blink">_</span>`;
+  btn.disabled = true;
+
+  setTimeout(() => {
+    screen.innerHTML = `<span style="font-size:2rem;filter:drop-shadow(0 0 8px var(--blue-core))">✅</span>`;
+    status.innerHTML = `<span style="color:var(--green-ok)">SCAN COMPLETE — COMPARING TO DATABASE</span>`;
+  }, 1800);
+
+  setTimeout(() => {
+    screen.classList.remove('scanning');
+    // Reveal match results
+    const results = [
+      { id: 'fp-holt', cls: 'match-no',      resId: 'fp-holt-result' },
+      { id: 'fp-cross', cls: 'match-partial', resId: 'fp-cross-result' },
+      { id: 'fp-mehta', cls: 'match-no',      resId: 'fp-mehta-result' },
+      { id: 'fp-shaw',  cls: 'match-yes',     resId: 'fp-shaw-result' },
+    ];
+    results.forEach((r, i) => {
+      setTimeout(() => {
+        document.getElementById(r.id).classList.add(r.cls);
+        document.getElementById(r.resId).style.display = 'block';
+      }, i * 400);
+    });
+
+    setTimeout(() => {
+      document.getElementById('fpConclusionBox').style.display = 'block';
+      incrementLabAnalyses();
+      showToast('🖐 Fingerprint match found: DR. LEILA SHAW', 'toast-red');
+    }, 2200);
+  }, 3600);
+
+  updateProgress();
+}
+
+// DNA Analysis
+let dnaBuilt = false;
+
+const dnaBasePairs = [
+  ['G','C'], ['A','T'], ['T','A'], ['C','G'], ['A','T'],
+  ['G','C'], ['C','G'], ['T','A'], ['G','C'], ['A','T'],
+  ['C','G'], ['A','T'], ['G','C'], ['T','A'], ['A','T'],
+];
+
+function buildDNAHelix() {
+  const helix = document.getElementById('dnaHelix');
+  if (helix.children.length > 0) return;
+
+  dnaBasePairs.forEach((pair, i) => {
+    const rung = document.createElement('div');
+    rung.className = 'dna-rung';
+    rung.style.opacity = '0';
+    rung.style.transform = 'translateX(-10px)';
+    rung.style.transition = `all 0.4s ease ${i * 80}ms`;
+
+    const left = document.createElement('div');
+    left.className = `dna-base base-${pair[0]}`;
+
+    const bond = document.createElement('div');
+    bond.className = 'dna-bond';
+
+    const right = document.createElement('div');
+    right.className = `dna-base base-${pair[1]}`;
+
+    const labelL = document.createElement('span');
+    labelL.style.fontFamily = 'var(--font-mono)';
+    labelL.style.fontSize = '0.5rem';
+    labelL.style.color = 'var(--text-lo)';
+    labelL.style.width = '10px';
+    labelL.style.textAlign = 'right';
+    labelL.textContent = pair[0];
+
+    const labelR = document.createElement('span');
+    labelR.style.fontFamily = 'var(--font-mono)';
+    labelR.style.fontSize = '0.5rem';
+    labelR.style.color = 'var(--text-lo)';
+    labelR.style.width = '10px';
+    labelR.textContent = pair[1];
+
+    rung.append(labelL, left, bond, right, labelR);
+    helix.appendChild(rung);
+
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        rung.style.opacity = '1';
+        rung.style.transform = 'translateX(0)';
+      }, i * 80);
+    });
+  });
+}
+
+let dnaDone = false;
+function runDNAAnalysis() {
+  if (dnaDone) return;
+  dnaDone = true;
+  state.dnaRun = true;
+
+  const seqEl = document.getElementById('dnaSeqText');
+  const btn = document.getElementById('dnaRunBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ SEQUENCING...';
+
+  const bases = 'ATCG';
+  let tick = 0;
+  const interval = setInterval(() => {
+    let seq = '';
+    for (let i = 0; i < 30; i++) seq += bases[Math.floor(Math.random() * 4)];
+    seqEl.textContent = seq;
+    tick++;
+    if (tick > 20) {
+      clearInterval(interval);
+      displayDNAResults();
+      btn.textContent = '✅ COMPLETE';
+    }
+  }, 80);
+
+  updateProgress();
+}
+
+function displayDNAResults() {
+  const finalSeq = 'ATCG<span class="highlight-match">AGCT</span>TACG<span class="highlight-match">GCTA</span>ATCG<span class="highlight-match">CAGT</span>';
+  document.getElementById('dnaSeqText').innerHTML = finalSeq;
+
+  const suspects = [
+    { name: 'DR. MARCUS HOLT', pct: 3,    cls: 'fill-low',  label: '3.2% — NO MATCH' },
+    { name: 'NINA CROSS',      pct: 12,   cls: 'fill-low',  label: '12.1% — NO MATCH' },
+    { name: 'KIRAN MEHTA',     pct: 8,    cls: 'fill-low',  label: '8.4% — NO MATCH' },
+    { name: 'DR. LEILA SHAW',  pct: 98.7, cls: 'fill-high', label: '98.7% — POSITIVE MATCH ⚠' },
+  ];
+
+  const container = document.getElementById('dnaResultsContainer');
+  container.innerHTML = '';
+
+  suspects.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.style.marginBottom = '1rem';
+    div.innerHTML = `
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+        <span class="text-mono" style="font-size:0.65rem;color:${i===3?'var(--red-glow)':'var(--text-mid)'}">${s.name}</span>
+        <span class="text-mono" style="font-size:0.6rem;color:${i===3?'var(--red-glow)':'var(--text-lo)'}">${s.label}</span>
+      </div>
+      <div class="dna-match-bar">
+        <div class="dna-match-fill ${s.cls}" style="width:0" data-target="${s.pct}"></div>
+      </div>`;
+    container.appendChild(div);
+  });
+
+  setTimeout(() => {
+    document.querySelectorAll('.dna-match-fill').forEach(bar => {
+      bar.style.width = bar.dataset.target + '%';
+    });
+  }, 100);
+
+  setTimeout(() => {
+    document.getElementById('dnaConclusionBox').style.display = 'block';
+    incrementLabAnalyses();
+    showToast('🧬 DNA match confirmed: DR. LEILA SHAW (98.7%)', 'toast-red');
+  }, 1600);
+}
+
+// Blood analysis
+function revealBlood(id) {
+  if (state.bloodRevealed[id]) return;
+  state.bloodRevealed[id] = true;
+
+  document.getElementById('blood-' + id).classList.add('revealed');
+  document.querySelector('#blood-' + id + ' .blood-detail').style.display = 'block';
+  document.querySelector('#blood-' + id + ' .tag').style.display = 'none';
+  showToast('🩸 Blood analysis result revealed', 'toast-amber');
+
+  const allDone = state.bloodRevealed.every(Boolean);
+  if (allDone) {
+    document.getElementById('bloodSuspectInfo').style.display = 'block';
+    incrementLabAnalyses();
+    showToast('🩸 Blood analysis complete — Type O- matches Shaw', 'toast-red');
+  }
+  updateProgress();
+}
+
+// Trace analysis
+let traceDone = false;
+function runTraceAnalysis() {
+  if (traceDone) return;
+  traceDone = true;
+  state.traceRun = true;
+
+  document.getElementById('traceRunBtn').disabled = true;
+  document.getElementById('traceRunBtn').textContent = '⏳ ANALYZING...';
+
+  const bars = document.querySelectorAll('.spectrum-bar');
+  const values = document.querySelectorAll('.spectrum-value');
+
+  bars.forEach((bar, i) => {
+    setTimeout(() => {
+      bar.style.width = bar.dataset.width + '%';
+      values[i].textContent = bar.dataset.width + '%';
+    }, i * 300);
+  });
+
+  setTimeout(() => {
+    document.getElementById('traceConclusionBox').style.display = 'block';
+    document.getElementById('traceRunBtn').textContent = '✅ ANALYSIS COMPLETE';
+    incrementLabAnalyses();
+    showToast('👣 Trace evidence links footprint to Dr. Leila Shaw', 'toast-green');
+  }, 2200);
+
+  updateProgress();
+}
+
+function incrementLabAnalyses() {
+  state.labAnalyses = Math.min(4, state.labAnalyses + 1);
+  document.getElementById('labProgressTag').textContent = 'ANALYSES: ' + state.labAnalyses + '/4';
+
+  if (state.labAnalyses >= 3) {
+    unlockSection('suspects');
+  }
+  if (state.labAnalyses >= 4) {
+    unlockSection('analysis');
+    unlockSection('verdict');
+    showToast('🎯 All analyses complete! Proceed to Suspects.', 'toast-green');
+    // Mark nav done
+    ['lab','suspects','analysis'].forEach(n => {
+      document.getElementById('nav-' + n).classList.add('done');
+    });
+  }
+  updateProgress();
+}
+
+// Spectrum chart on view
+function animateSpectrumOnView() {
+  const bars = document.querySelectorAll('.spectrum-bar');
+  const values = document.querySelectorAll('.spectrum-value');
+  bars.forEach((bar, i) => {
+    if (bar.style.width === '0px' || bar.style.width === '' || bar.style.width === '0') {
+      // not yet animated - wait for button
+    }
+  });
+}
+
+/* ============================================================
+   SECTION 4: SUSPECTS — MODAL
+   ============================================================ */
+const suspectProfiles = {
+  holt: {
+    title: 'DR. MARCUS HOLT',
+    subtitle: 'RIVAL RESEARCHER — BIOSYNTH INC.',
+    body: `
+      <div class="modal-image-block">👨‍🔬</div>
+      <p class="modal-body">Dr. Marcus Holt is a senior researcher at BioSynth Inc., a direct competitor to Northfield Labs. 
+      He was present at the facility on May 9th for a <strong>conference presentation</strong>, giving him potential access and a clear motive — 
+      his own research team has been <em>racing to sequence a similar genome</em>.</p>
+
+      <p class="modal-body" style="margin-top:0.75rem;">
+      However, his hotel keycard log shows he <strong>returned to his room at 11:12 PM</strong> — 35 minutes before the break-in — 
+      and room service was delivered at 11:58 PM. His blood type (A+) and fingerprints do not match the crime scene evidence.
+      </p>
+
+      <div class="modal-fact-list mt-1">
+        <div class="modal-fact"><div class="modal-fact-icon">✅</div><div class="modal-fact-text">Alibi verified: hotel keycard + room service delivery log</div></div>
+        <div class="modal-fact"><div class="modal-fact-icon">✅</div><div class="modal-fact-text">Blood type A+ — does NOT match O- at scene</div></div>
+        <div class="modal-fact"><div class="modal-fact-icon">✅</div><div class="modal-fact-text">Fingerprint negative — ridge pattern completely different</div></div>
+      </div>
+      <div style="margin-top:1rem;"><span class="tag tag-green">● CLEARED BY FORENSIC EVIDENCE</span></div>
+    `
+  },
+  cross: {
+    title: 'NINA CROSS',
+    subtitle: 'LAB ADMINISTRATOR — NORTHFIELD LAB',
+    body: `
+      <div class="modal-image-block">👩‍💼</div>
+      <p class="modal-body">Nina Cross is the lab administrator with full Level 3 access to most of the facility, 
+      including Lab B. She has worked at Northfield for 7 years and recently had a <strong>financial dispute over a patent claim</strong>.
+      Her alibi for the night of May 9th is <em>unverified</em> — she claims she was home alone.</p>
+
+      <p class="modal-body" style="margin-top:0.75rem;">
+      Her fingerprint shows a <strong>7-point partial match</strong> — significant, but below the 12-point threshold for positive ID. 
+      This could be explained by her routine access to the door. Her blood type (B+) <strong>does not match</strong> the O- blood at the scene. 
+      DNA from the cryo-vial also does not match her profile.
+      </p>
+
+      <div class="modal-fact-list mt-1">
+        <div class="modal-fact"><div class="modal-fact-icon">⚠️</div><div class="modal-fact-text">Alibi unverified — no independent confirmation</div></div>
+        <div class="modal-fact"><div class="modal-fact-icon">⚠️</div><div class="modal-fact-text">7-point fingerprint partial match (inconclusive)</div></div>
+        <div class="modal-fact"><div class="modal-fact-icon">✅</div><div class="modal-fact-text">Blood type B+ — does NOT match O- at scene</div></div>
+        <div class="modal-fact"><div class="modal-fact-icon">✅</div><div class="modal-fact-text">DNA negative — not a match for cryo-vial sample</div></div>
+      </div>
+      <div style="margin-top:1rem;"><span class="tag tag-amber">⚠ PERSON OF INTEREST — INSUFFICIENT EVIDENCE</span></div>
+    `
+  },
+  mehta: {
+    title: 'KIRAN MEHTA',
+    subtitle: 'IT SECURITY TECH — NORTHFIELD LAB',
+    body: `
+      <div class="modal-image-block">👨‍💻</div>
+      <p class="modal-body">Kiran Mehta is the facility's IT security technician — the person who 
+      <strong>disabled the cameras</strong> is believed to have had knowledge of the system. Mehta had that knowledge.
+      However, his access logs show he was <strong>remotely logged into the systems network at 11:44 PM</strong>, 
+      only 3 minutes before the breach.</p>
+
+      <p class="modal-body" style="margin-top:0.75rem;">
+      The IP ping log confirms his <em>home router address</em>, establishing a strong digital alibi. 
+      His blood type (O+) is a possible match, but the DNA from the scene does not match him. 
+      His fingerprints are not found anywhere near the cryo unit.
+      </p>
+
+      <div class="modal-fact-list mt-1">
+        <div class="modal-fact"><div class="modal-fact-icon">✅</div><div class="modal-fact-text">Digital alibi: verified home IP ping at 11:44 PM</div></div>
+        <div class="modal-fact"><div class="modal-fact-icon">✅</div><div class="modal-fact-text">Fingerprint negative — not found at scene</div></div>
+        <div class="modal-fact"><div class="modal-fact-icon">✅</div><div class="modal-fact-text">DNA negative — not a match</div></div>
+        <div class="modal-fact"><div class="modal-fact-icon">⚠️</div><div class="modal-fact-text">Had knowledge of camera systems — worth noting</div></div>
+      </div>
+      <div style="margin-top:1rem;"><span class="tag tag-green">● CLEARED BY FORENSIC EVIDENCE</span></div>
+    `
+  },
+  shaw: {
+    title: 'DR. LEILA SHAW',
+    subtitle: 'LAB TECHNICIAN — GENOMICS DEPT.',
+    body: `
+      <div class="modal-image-block" style="border-color:rgba(204,34,0,0.4);">👩‍🔬</div>
+      <p class="modal-body">Dr. Leila Shaw is a senior lab technician in the genomics department with <strong>Level 4 unrestricted access</strong> — 
+      including the cryo storage unit where Vial #G-447 was kept. She has been with Northfield for 12 years but 
+      recently <em>applied for a position at a competing firm</em> and was reportedly <strong>passed over for promotion</strong>.</p>
+
+      <p class="modal-body" style="margin-top:0.75rem;">
+      She has <strong class="red">no alibi</strong> for the time window of the theft. DNA recovered from the cryo-vial seal 
+      matches her reference profile at <strong class="red">98.7%</strong>. Her fingerprint is found at the entry point. 
+      Blood type O- blood trail at the scene matches hers. Chemical trace LB-7 in the footprint is used exclusively in her bay.
+      </p>
+
+      <div class="modal-fact-list mt-1">
+        <div class="modal-fact"><div class="modal-fact-icon">🚨</div><div class="modal-fact-text"><strong>DNA 98.7% match</strong> — places her in direct contact with stolen vial</div></div>
+        <div class="modal-fact"><div class="modal-fact-icon">🚨</div><div class="modal-fact-text"><strong>11-point fingerprint match</strong> — found on Lab B door handle</div></div>
+        <div class="modal-fact"><div class="modal-fact-icon">🚨</div><div class="modal-fact-text"><strong>Blood type O- match</strong> — rare type matching scene blood trail</div></div>
+        <div class="modal-fact"><div class="modal-fact-icon">🚨</div><div class="modal-fact-text"><strong>Chemical LB-7 in footprint</strong> — only used in her research bay</div></div>
+        <div class="modal-fact"><div class="modal-fact-icon">🚨</div><div class="modal-fact-text"><strong>No alibi</strong> — completely unaccounted for during the time of theft</div></div>
+      </div>
+      <div style="margin-top:1rem;"><span class="tag tag-red">🚨 PRIMARY SUSPECT — STRONG FORENSIC EVIDENCE</span></div>
+    `
+  }
+};
+
+function showSuspectModal(id) {
+  const p = suspectProfiles[id];
+  document.getElementById('modalContent').innerHTML = `
+    <div class="modal-title">${p.title}</div>
+    <div class="modal-subtitle">${p.subtitle}</div>
+    ${p.body}
+  `;
+  openModal();
+}
+
+/* ============================================================
+   VERDICT
+   ============================================================ */
+function selectVerdictSuspect(id) {
+  state.selectedSuspect = id;
+  document.querySelectorAll('.verdict-suspect-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('vs-' + id).classList.add('selected');
+  updateSubmitBtn();
+  updateProgress();
+}
+
+function selectConfidence(btn, val) {
+  state.selectedConfidence = val;
+  document.querySelectorAll('#confidenceBtns .btn').forEach(b => b.classList.remove('btn-primary'));
+  document.querySelectorAll('#confidenceBtns .btn').forEach(b => b.classList.add('btn-ghost'));
+  btn.classList.remove('btn-ghost');
+  btn.classList.add('btn-primary');
+  updateSubmitBtn();
+}
+
+function updateSubmitBtn() {
+  document.getElementById('submitVerdictBtn').disabled = !(state.selectedSuspect && state.selectedConfidence);
+}
+
+function submitVerdict() {
+  const isCorrect = state.selectedSuspect === CORRECT_SUSPECT;
+  const resultEl = document.getElementById('verdictResult');
+  const bigText = document.getElementById('verdictBigText');
+  const body = document.getElementById('verdictResultBody');
+
+  resultEl.className = 'verdict-result show ' + (isCorrect ? 'correct' : 'incorrect');
+  document.getElementById('verdictSummaryPanel').style.display = 'none';
+
+  if (isCorrect) {
+    bigText.className = 'verdict-big verdict-correct-text';
+    bigText.textContent = 'CASE SOLVED';
+    body.innerHTML = `
+      <div style="font-size:3rem;margin:1rem 0">🏆</div>
+      <p class="verdict-explanation">
+        <strong>Excellent forensic work!</strong> You correctly identified <strong>Dr. Leila Shaw</strong> as the perpetrator 
+        based on convergent forensic evidence from multiple independent analyses.
+      </p>
+      <p class="verdict-explanation" style="margin-top:0.75rem;">
+        This case demonstrates why forensic investigators collect <em>multiple types of evidence</em> — when fingerprints, 
+        DNA, blood typing, and trace evidence all point to the same individual, the case becomes nearly unassailable in court.
+      </p>
+      <div style="margin-top:1.5rem;padding:1rem;background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.2);border-radius:6px;">
+        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--green-ok);margin-bottom:0.5rem;">📊 YOUR SCORE</div>
+        <div style="font-family:var(--font-head);font-size:2rem;color:var(--green-ok);">
+          ${state.progress}% COMPLETE
+        </div>
+        <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-lo);margin-top:4px;">
+          EVIDENCE COLLECTED: ${state.evidenceCollected.filter(Boolean).length}/5 &nbsp;|&nbsp; 
+          ANALYSES: ${state.labAnalyses}/4
+        </div>
+      </div>`;
+    showToast('🎉 CASE SOLVED! Excellent investigation!', 'toast-green');
+    launchConfetti();
+  } else {
+    bigText.className = 'verdict-big verdict-incorrect-text';
+    bigText.textContent = 'INCORRECT';
+    const names = { holt: 'Dr. Marcus Holt', cross: 'Nina Cross', mehta: 'Kiran Mehta', shaw: 'Dr. Leila Shaw' };
+    body.innerHTML = `
+      <div style="font-size:3rem;margin:1rem 0">❌</div>
+      <p class="verdict-explanation">
+        <strong>${names[state.selectedSuspect]}</strong> is not the perpetrator. Review the forensic evidence more carefully.
+        The DNA, fingerprint, blood type, and trace chemical evidence all point to a different suspect.
+      </p>
+      <p class="verdict-explanation" style="margin-top:0.75rem;">
+        Return to the <strong>Evidence Lab</strong> and the <strong>Analysis</strong> section to review your findings before submitting again.
+      </p>
+      <button class="btn btn-ghost mt-2" onclick="retryVerdict()">🔄 TRY AGAIN</button>`;
+  }
+
+  document.getElementById('nav-verdict').classList.add('done');
+  updateProgress();
+}
+
+function retryVerdict() {
+  state.selectedSuspect = null;
+  document.querySelectorAll('.verdict-suspect-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('verdictResult').className = 'verdict-result';
+  document.getElementById('verdictSummaryPanel').style.display = 'block';
+  document.getElementById('submitVerdictBtn').disabled = true;
+}
+
+/* ============================================================
+   DEDUCTION BOARD
+   ============================================================ */
+function toggleDeduction(el) {
+  el.classList.toggle('selected');
+  state.deductionsSelected = document.querySelectorAll('.deduction-item.selected').length;
+  document.getElementById('deductionCount').textContent = state.deductionsSelected + '/8 conclusions marked';
+}
+
+/* ============================================================
+   MODAL SYSTEM
+   ============================================================ */
+const modalContents = {
+  'scene-info': {
+    title: 'HOW TO COLLECT EVIDENCE',
+    subtitle: 'CRIME SCENE PROTOCOL',
+    html: `<p class="modal-body">Click on the <strong style="color:var(--amber)">glowing markers (●)</strong> scattered around the crime scene to collect each piece of evidence. 
+    Hovering over a marker shows what type of evidence it contains. Once collected, evidence will appear in the log on the right.</p>
+    <p class="modal-body" style="margin-top:0.75rem;">You need to collect <strong>all 5 pieces of evidence</strong> before proceeding to the Forensic Lab for analysis.</p>
+    <div class="modal-fact-list mt-1">
+      <div class="modal-fact"><div class="modal-fact-icon">👆</div><div class="modal-fact-text">Fingerprints — found near points of entry/exit</div></div>
+      <div class="modal-fact"><div class="modal-fact-icon">🧬</div><div class="modal-fact-text">DNA samples — found near the stolen item</div></div>
+      <div class="modal-fact"><div class="modal-fact-icon">🩸</div><div class="modal-fact-text">Blood traces — passive drip patterns near exit</div></div>
+      <div class="modal-fact"><div class="modal-fact-icon">📷</div><div class="modal-fact-text">Camera footage — security hardware</div></div>
+      <div class="modal-fact"><div class="modal-fact-icon">👣</div><div class="modal-fact-text">Footprints — found in spilled reagent near window</div></div>
+    </div>`
+  },
+  'ev-fp': {
+    title: 'EVIDENCE EV-001',
+    subtitle: 'LATENT FINGERPRINT — DOOR HANDLE',
+    html: `<div class="modal-image-block">👆<br><small style="font-size:0.6rem;color:var(--text-lo);font-family:var(--font-mono)">ARCH PATTERN DETECTED</small></div>
+    <p class="modal-body">A latent fingerprint was recovered from the <strong>magnetic door handle of Lab B</strong> using 
+    <em>ninhydrin chemical development</em>, which reacts with amino acids in sweat residue to reveal ridge patterns.</p>
+    <p class="modal-body" style="margin-top:0.75rem;">Initial analysis shows an <strong>arch-type ridge pattern</strong> — the rarest fingerprint type, 
+    found in only ~5% of individuals. This is a <strong>significant discriminating characteristic</strong>.</p>
+    <p class="modal-body" style="margin-top:0.75rem;color:var(--amber);">⚗️ Sending to fingerprint scanner in the Forensic Lab for full ridge-point analysis.</p>`
+  },
+  'ev-dna': {
+    title: 'EVIDENCE EV-002',
+    subtitle: 'DNA SAMPLE — CRYO-VIAL SEAL',
+    html: `<div class="modal-image-block">🧬</div>
+    <p class="modal-body">Skin cells (epithelial cells) were collected from the <strong>seal of Cryo-Vial #G-447</strong> 
+    using an adhesive swab. The cells contain <em>nuclear DNA</em> — the same genetic code found in every cell of the donor.</p>
+    <p class="modal-body" style="margin-top:0.75rem;">PCR amplification will allow us to generate a <strong>complete STR profile</strong> even from this small sample. 
+    STR (Short Tandem Repeat) analysis uses 20 genetic loci to create a unique genetic fingerprint.</p>
+    <p class="modal-body" style="margin-top:0.75rem;color:var(--amber);">🧪 DNA quality: HIGH — sufficient for full sequencing analysis.</p>`
+  },
+  'ev-blood': {
+    title: 'EVIDENCE EV-003',
+    subtitle: 'BLOOD TRACE — LAB FLOOR',
+    html: `<div class="modal-image-block">🩸</div>
+    <p class="modal-body">Three blood droplets were found near the Lab B <strong>east exit</strong>. 
+    The droplet shape and size are consistent with <em>passive dripping from a minor cut wound</em> — 
+    likely sustained while forcing the cryo-chamber open.</p>
+    <p class="modal-body" style="margin-top:0.75rem;">Blood contains <strong>white blood cells (leukocytes)</strong> with full nuclear DNA, 
+    as well as surface antigens that determine <em>ABO blood type</em>. 
+    Both tests will be run in the lab.</p>
+    <p class="modal-body" style="margin-top:0.75rem;color:var(--amber);">📊 Sample volume: sufficient for blood typing AND DNA extraction.</p>`
+  },
+  'ev-cam': {
+    title: 'EVIDENCE EV-004',
+    subtitle: 'SURVEILLANCE FOOTAGE — CAMERA C4',
+    html: `<div class="modal-image-block">📷<br><small style="font-size:0.6rem;color:var(--red-glow);font-family:var(--font-mono)">4.7 SEC RECOVERED</small></div>
+    <p class="modal-body">Camera C4 recorded <strong>4.7 seconds of footage</strong> before being disabled. The perpetrator appeared to 
+    know the camera's location, suggesting <em>insider knowledge</em> of the security system.</p>
+    <p class="modal-body" style="margin-top:0.75rem;">Image enhancement reveals: white lab coat, <strong>estimated height 5'7"–5'9"</strong>, 
+    dark hair, moving purposefully toward the cryo storage unit. 
+    The footage was analyzed using <strong>forensic video enhancement</strong> techniques.</p>
+    <p class="modal-body" style="margin-top:0.75rem;color:var(--amber);">📐 This description is consistent with multiple suspects — corroborating evidence required.</p>`
+  },
+  'ev-foot': {
+    title: 'EVIDENCE EV-005',
+    subtitle: 'FOOTPRINT — SPILLED REAGENT',
+    html: `<div class="modal-image-block">👣</div>
+    <p class="modal-body">A clear shoe impression was left in a spill of <strong>chemical reagent near the lab window</strong>. 
+    A <em>dental stone cast</em> was made to preserve the three-dimensional impression detail, 
+    allowing for tread pattern and size analysis.</p>
+    <p class="modal-body" style="margin-top:0.75rem;">Preliminary measurements: <strong>size 10 men's shoe</strong>, dress-style sole with 
+    distinctive crosshatch tread — consistent with <em>Cole Haan laboratory dress shoes</em> 
+    issued to senior staff. The left-foot impression suggests a <strong>right-foot dominant gait</strong>.</p>
+    <p class="modal-body" style="margin-top:0.75rem;color:var(--amber);">⚗️ Reagent chemical residue will be tested for compound identification.</p>`
+  }
+};
+
+function showModal(id) {
+  if (modalContents[id]) {
+    const c = modalContents[id];
+    document.getElementById('modalContent').innerHTML = `
+      <div class="modal-title">${c.title}</div>
+      <div class="modal-subtitle">${c.subtitle}</div>
+      ${c.html}`;
+    openModal();
+  }
+}
+
+function openModal() {
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+/* ============================================================
+   TOAST NOTIFICATIONS
+   ============================================================ */
+function showToast(msg, cls = '') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + cls;
+  toast.innerHTML = `<span>${msg}</span>`;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add('out');
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
+}
+
+/* ============================================================
+   CONFETTI (correct verdict)
+   ============================================================ */
+function launchConfetti() {
+  const resultEl = document.getElementById('verdictResult');
+  const colors = ['var(--blue-core)', 'var(--green-ok)', 'var(--amber)', '#fff'];
+
+  for (let i = 0; i < 30; i++) {
+    setTimeout(() => {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.cssText = `
+        left: ${Math.random() * 100}%;
+        top: ${20 + Math.random() * 60}%;
+        background: ${colors[Math.floor(Math.random() * colors.length)]};
+        width: ${4 + Math.random() * 6}px;
+        height: ${4 + Math.random() * 6}px;
+        border-radius: ${Math.random() > 0.5 ? '50%' : '0'};
+        animation: confettiFall 2s ease forwards;
+        transform: rotate(${Math.random() * 360}deg);
+      `;
+      resultEl.appendChild(piece);
+      piece.style.opacity = '1';
+
+      setTimeout(() => {
+        piece.style.transition = `all ${0.8 + Math.random()}s ease`;
+        piece.style.transform = `translateY(${30 + Math.random() * 60}px) rotate(${Math.random() * 360}deg)`;
+        piece.style.opacity = '0';
+        setTimeout(() => piece.remove(), 2000);
+      }, 50);
+    }, i * 60);
+  }
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+window.addEventListener('DOMContentLoaded', () => {
+  updateProgress();
+
+  // Build DNA helix placeholder structure
+  buildDNAHelix();
+
+  // Animate progress ring entry
+  setTimeout(updateProgress, 300);
+});
+</script>
+</body>
+</html>

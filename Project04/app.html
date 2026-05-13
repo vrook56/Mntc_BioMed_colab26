@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clinical Skills Hospital Simulation</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #e8f4ff, #f7fbff);
+      color: #1f2937;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    header {
+      background: #0f766e;
+      color: white;
+      padding: 25px;
+      border-radius: 18px;
+      text-align: center;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      margin-bottom: 25px;
+    }
+
+    header h1 {
+      font-size: 2.2rem;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      font-size: 1rem;
+      opacity: 0.95;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      gap: 20px;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+      border-top: 7px solid #14b8a6;
+    }
+
+    .card h2 {
+      color: #0f766e;
+      margin-bottom: 12px;
+      font-size: 1.35rem;
+    }
+
+    .card p {
+      margin-bottom: 12px;
+      line-height: 1.45;
+    }
+
+    button {
+      background: #0f766e;
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      margin-top: 8px;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #115e59;
+      transform: scale(1.03);
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 7px 0 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 0.95rem;
+    }
+
+    label {
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    .output {
+      background: #f1f5f9;
+      border-left: 5px solid #0f766e;
+      padding: 12px;
+      margin-top: 12px;
+      border-radius: 10px;
+      min-height: 45px;
+      line-height: 1.45;
+    }
+
+    .patient-room {
+      background: #ecfeff;
+      border: 2px dashed #0f766e;
+      padding: 15px;
+      border-radius: 14px;
+      margin-top: 10px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #ccfbf1;
+      color: #134e4a;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      margin: 3px;
+      font-weight: bold;
+    }
+
+    .danger {
+      color: #b91c1c;
+      font-weight: bold;
+    }
+
+    .normal {
+      color: #15803d;
+      font-weight: bold;
+    }
+
+    .warning {
+      color: #b45309;
+      font-weight: bold;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 30px;
+      color: #475569;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🏥 Clinical Skills Hospital Simulation</h1>
+    <p>Career Tech Biomed Interactive Demonstration: vital signs, patient data, and clinical care roles.</p>
+  </header>
+
+  <main class="dashboard">
+    <section class="card">
+      <h2>🩺 Patient Check-In</h2>
+      <p>Collect basic patient information before the clinical exam.</p>
+
+      <label>Patient Name</label>
+      <input id="patientName" type="text" placeholder="Example: Jordan Lee" />
+
+      <label>Age</label>
+      <input id="patientAge" type="number" placeholder="Example: 16" />
+
+      <label>Main Concern</label>
+      <textarea id="patientConcern" placeholder="Example: dizziness, headache, fever..."></textarea>
+
+      <button onclick="createChart()">Create Patient Chart</button>
+      <div id="chartOutput" class="output">No patient chart created yet.</div>
+    </section>
+
+    <section class="card">
+      <h2>❤️ Vital Signs Interpreter</h2>
+      <p>Enter vital signs and receive a basic clinical interpretation.</p>
+
+      <label>Temperature °F</label>
+      <input id="temp" type="number" placeholder="Example: 98.6" />
+
+      <label>Heart Rate BPM</label>
+      <input id="heartRate" type="number" placeholder="Example: 72" />
+
+      <label>Respiratory Rate</label>
+      <input id="respRate" type="number" placeholder="Example: 16" />
+
+      <label>Blood Pressure</label>
+      <input id="bloodPressure" type="text" placeholder="Example: 120/80" />
+
+      <button onclick="interpretVitals()">Interpret Vitals</button>
+      <div id="vitalsOutput" class="output">Enter vitals to begin.</div>
+    </section>
+
+    <section class="card">
+      <h2>🎭 Clinical Role Simulator</h2>
+      <p>Practice the different roles used during patient care.</p>
+
+      <label>Choose Your Role</label>
+      <select id="roleSelect">
+        <option value="nurse">Nurse</option>
+        <option value="doctor">Doctor</option>
+        <option value="patient">Patient</option>
+        <option value="medicalAssistant">Medical Assistant</option>
+      </select>
+
+      <button onclick="showRoleTask()">Show Role Task</button>
+      <div id="roleOutput" class="output">Choose a role to see your task.</div>
+    </section>
+
+    <section class="card">
+      <h2>🚨 Scenario Challenge</h2>
+      <p>Read the patient scenario and choose the best clinical action.</p>
+
+      <div class="patient-room">
+        <p><strong>Patient:</strong> Taylor Morgan</p>
+        <p><strong>Symptoms:</strong> dizzy, pale, breathing quickly</p>
+        <p><strong>Vitals:</strong> Temp 99.1°F, HR 126 BPM, RR 28, BP 90/60</p>
+      </div>
+
+      <label>What should the clinical team do first?</label>
+      <select id="scenarioAnswer">
+        <option value="water">Give the patient water and wait</option>
+        <option value="alert">Alert the nurse/doctor and keep monitoring vitals</option>
+        <option value="ignore">Ignore it because temperature is normal</option>
+        <option value="exercise">Ask the patient to walk around</option>
+      </select>
+
+      <button onclick="checkScenario()">Check Answer</button>
+      <div id="scenarioOutput" class="output">Choose an action.</div>
+    </section>
+
+    <section class="card">
+      <h2>📋 Clinical Skills Checklist</h2>
+      <p>Click each skill after completing it during the demonstration.</p>
+
+      <button onclick="completeSkill('Measured temperature')">Measured Temperature</button>
+      <button onclick="completeSkill('Checked heart rate')">Checked Heart Rate</button>
+      <button onclick="completeSkill('Recorded patient data')">Recorded Patient Data</button>
+      <button onclick="completeSkill('Interpreted vital signs')">Interpreted Vitals</button>
+      <button onclick="completeSkill('Communicated with care team')">Team Communication</button>
+
+      <div id="skillsOutput" class="output">Completed skills will appear here.</div>
+    </section>
+
+    <section class="card">
+      <h2>🏆 Final Reflection</h2>
+      <p>Explain what clinical skills are important in real patient care.</p>
+
+      <textarea id="reflection" placeholder="Write your reflection here..."></textarea>
+      <button onclick="saveReflection()">Submit Reflection</button>
+      <div id="reflectionOutput" class="output">No reflection submitted yet.</div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Created for Career Tech Biomed | Clinical Skills Interactive Hospital App</p>
+  </footer>
+
+  <script>
+    let completedSkills = [];
+
+    function createChart() {
+      const name = document.getElementById("patientName").value || "Unnamed Patient";
+      const age = document.getElementById("patientAge").value || "Unknown age";
+      const concern = document.getElementById("patientConcern").value || "No concern listed";
+
+      document.getElementById("chartOutput").innerHTML = `
+        <strong>Patient Chart Created</strong><br>
+        <span class="badge">Name: ${name}</span>
+        <span class="badge">Age: ${age}</span><br><br>
+        <strong>Main Concern:</strong> ${concern}
+      `;
+    }
+
+    function interpretVitals() {
+      const temp = parseFloat(document.getElementById("temp").value);
+      const heartRate = parseInt(document.getElementById("heartRate").value);
+      const respRate = parseInt(document.getElementById("respRate").value);
+      const bp = document.getElementById("bloodPressure").value;
+
+      let results = "<strong>Vital Signs Report:</strong><br>";
+
+      if (!isNaN(temp)) {
+        if (temp >= 100.4) results += `Temperature: <span class="warning">Possible fever</span><br>`;
+        else if (temp < 96) results += `Temperature: <span class="danger">Low temperature</span><br>`;
+        else results += `Temperature: <span class="normal">Normal range</span><br>`;
+      }
+
+      if (!isNaN(heartRate)) {
+        if (heartRate > 100) results += `Heart Rate: <span class="warning">High pulse</span><br>`;
+        else if (heartRate < 60) results += `Heart Rate: <span class="warning">Low pulse</span><br>`;
+        else results += `Heart Rate: <span class="normal">Normal adult resting range</span><br>`;
+      }
+
+      if (!isNaN(respRate)) {
+        if (respRate > 20) results += `Respiratory Rate: <span class="warning">Breathing faster than normal</span><br>`;
+        else if (respRate < 12) results += `Respiratory Rate: <span class="warning">Breathing slower than normal</span><br>`;
+        else results += `Respiratory Rate: <span class="normal">Normal adult range</span><br>`;
+      }
+
+      if (bp.trim() !== "") {
+        results += `Blood Pressure Recorded: <strong>${bp}</strong><br>`;
+      }
+
+      results += `<br><em>Note: This is a classroom simulation, not real medical advice.</em>`;
+      document.getElementById("vitalsOutput").innerHTML = results;
+    }
+
+    function showRoleTask() {
+      const role = document.getElementById("roleSelect").value;
+      let task = "";
+
+      if (role === "nurse") {
+        task = "Assess the patient, review vital signs, communicate concerns, and support patient comfort.";
+      } else if (role === "doctor") {
+        task = "Review patient data, ask follow-up questions, decide possible next steps, and explain the care plan.";
+      } else if (role === "patient") {
+        task = "Describe symptoms clearly, answer questions honestly, and explain how you feel.";
+      } else if (role === "medicalAssistant") {
+        task = "Collect vital signs, update the chart, prepare the room, and report abnormal findings.";
+      }
+
+      document.getElementById("roleOutput").innerHTML = `<strong>Your Role Task:</strong><br>${task}`;
+    }
+
+    function checkScenario() {
+      const answer = document.getElementById("scenarioAnswer").value;
+      const output = document.getElementById("scenarioOutput");
+
+      if (answer === "alert") {
+        output.innerHTML = `<span class="normal">Correct!</span> The patient has concerning signs like high heart rate, fast breathing, and low blood pressure. The team should alert clinical staff and continue monitoring.`;
+      } else {
+        output.innerHTML = `<span class="danger">Not the best choice.</span> These vitals may show a serious problem. The safest first step is to alert the nurse or doctor and keep monitoring the patient.`;
+      }
+    }
+
+    function completeSkill(skill) {
+      if (!completedSkills.includes(skill)) {
+        completedSkills.push(skill);
+      }
+
+      document.getElementById("skillsOutput").innerHTML = completedSkills
+        .map(item => `<span class="badge">✓ ${item}</span>`)
+        .join(" ");
+    }
+
+    function saveReflection() {
+      const text = document.getElementById("reflection").value || "No reflection written.";
+      document.getElementById("reflectionOutput").innerHTML = `<strong>Reflection Submitted:</strong><br>${text}`;
+    }
+  </script>
+</body>
+</html>

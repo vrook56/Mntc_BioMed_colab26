@@ -1,0 +1,432 @@
+import React, { useState } from 'react';
+
+export default function BiomedDNALab() {
+  const diseases = {
+    Alzheimer: {
+      dna: 'AAC-TTG-GGA-CCC',
+      result: 'Amyloid plaque associated mutation detected.',
+      advice: 'Observe how protein buildup affects neurological cells.',
+      bloodEffect:
+        'Protein fragments may interfere with healthy brain signaling.',
+      dnaEffect:
+        'Gene mutations increase harmful protein accumulation in neurons.',
+      bloodCells: '🧠 🧠 ⬤ 🧠',
+      dnaColor: 'from-slate-400 to-blue-500',
+      petriPattern: '🟤 🧫 🟤 🧫',
+      petriDescription:
+        'Protein-like plaques forming across neural tissue cultures.'
+    },
+    Influenza: {
+      dna: 'GGT-ACC-TTA-GAA',
+      result: 'Rapid viral mutation markers identified.',
+      advice: 'Study how viral mutations spread quickly between cells.',
+      bloodEffect:
+        'Immune response increases inflammation and fever symptoms.',
+      dnaEffect:
+        'Virus rapidly changes genetic material to evade immunity.',
+      bloodCells: '🦠 ⬤ 🦠 ⬤',
+      dnaColor: 'from-green-300 to-lime-500',
+      petriPattern: '🦠 🦠 🧫 🦠',
+      petriDescription:
+        'Fast-spreading viral colonies visible across the dish.'
+    },
+    Parkinsons: {
+      dna: 'TGC-AAA-GGT-CCA',
+      result: 'Neuron degeneration mutation detected.',
+      advice: 'Observe changes linked to dopamine-producing neurons.',
+      bloodEffect:
+        'Nerve signaling proteins begin malfunctioning over time.',
+      dnaEffect:
+        'Damaged neuron-support genes affect motor control.',
+      bloodCells: '🧠 ⚫ 🧠 ⚫',
+      dnaColor: 'from-yellow-400 to-amber-500',
+      petriPattern: '🟡 ⚫ 🟡 ⚫',
+      petriDescription:
+        'Degenerating neural cell clusters spreading unevenly.'
+    },
+    Asthma: {
+      dna: 'GAA-TTC-AGC-CTA',
+      result: 'Airway inflammation response genes activated.',
+      advice: 'Observe how inflammation affects oxygen flow and respiratory tissue.',
+      bloodEffect:
+        'Inflammation reduces oxygen efficiency and stresses blood oxygen transport.',
+      dnaEffect:
+        'Immune-response genes trigger airway swelling and mucus production.',
+      bloodCells: '🫁 ⬤ 🫁 ⬤',
+      dnaColor: 'from-sky-400 to-cyan-500',
+      petriPattern: '🟢 🌫️ 🟢 🌫️',
+      petriDescription:
+        'Inflamed respiratory cell cultures spreading mucus-like layers.'
+    },
+    Cancer: {
+      dna: 'ATG-CGA-TTA-GGC',
+      result: 'Mutation detected in tumor suppressor gene.',
+      advice: 'Focus on comparing healthy and mutated DNA strands.',
+      bloodEffect:
+        'Abnormal white blood cell growth disrupting healthy blood cells.',
+      dnaEffect:
+        'Damaged tumor suppressor genes causing uncontrolled cell division.',
+      bloodCells: '⬤ ⬤ ◉ ⬤ ◉',
+      dnaColor: 'from-green-400 to-red-500',
+      petriPattern: '🦠 🧫 🦠 🧫',
+      petriDescription:
+        'Rapid irregular cancer cell colonies spreading across the culture.'
+    },
+    SickleCell: {
+      dna: 'ATG-GTG-ACT-GAA',
+      result: 'Hemoglobin mutation identified.',
+      advice: 'Observe how a single mutation changes protein structure.',
+      bloodEffect:
+        'Red blood cells become crescent or sickle shaped.',
+      dnaEffect:
+        'Single base mutation changes hemoglobin protein formation.',
+      bloodCells: '☾ ☾ ⬤ ☾ ⬤',
+      dnaColor: 'from-red-400 to-orange-500',
+      petriPattern: '☾ ⬤ ☾ ⬤',
+      petriDescription:
+        'Distorted blood cells clustering unevenly in the dish.'
+    },
+    CysticFibrosis: {
+      dna: 'ATC-TTT-GGA-CTA',
+      result: 'CFTR gene mutation discovered.',
+      advice: 'Analyze the missing protein channel sequence carefully.',
+      bloodEffect:
+        'Thick mucus buildup reduces oxygen flow in tissues.',
+      dnaEffect:
+        'CFTR protein channel fails to transport chloride correctly.',
+      bloodCells: '⬤ ⬤ ⬤ ⬤ ⬤',
+      dnaColor: 'from-cyan-400 to-blue-500',
+      petriPattern: '🧫 🟢 🟢 🧫',
+      petriDescription:
+        'Sticky mucus-producing bacterial growth visible in culture.'
+    },
+    Leukemia: {
+      dna: 'GGA-TTC-CCA-AGT',
+      result: 'Abnormal white blood cell DNA replication detected.',
+      advice: 'Observe how excessive white blood cell growth affects blood composition.',
+      bloodEffect:
+        'Overproduction of immature white blood cells crowds healthy cells.',
+      dnaEffect:
+        'DNA replication errors increase uncontrolled blood cell growth.',
+      bloodCells: '◉ ◉ ◉ ⬤ ◉',
+      dnaColor: 'from-purple-400 to-pink-500',
+      petriPattern: '⚪ ⚪ 🦠 ⚪',
+      petriDescription:
+        'Dense white cell clusters rapidly expanding through the dish.'
+    },
+    Diabetes: {
+      dna: 'TTA-GGC-ATA-CCC',
+      result: 'Insulin regulation gene mutation identified.',
+      advice: 'Study how glucose regulation genes affect cell activity.',
+      bloodEffect:
+        'Elevated glucose levels damage blood vessels and cells over time.',
+      dnaEffect:
+        'Mutations affect insulin production and glucose processing.',
+      bloodCells: '⬤ 🍬 ⬤ 🍬 ⬤',
+      dnaColor: 'from-yellow-300 to-orange-400',
+      petriPattern: '🟡 🟠 🟡 🧫',
+      petriDescription:
+        'High glucose environment accelerating abnormal microbial growth.'
+    },
+    Huntington: {
+      dna: 'CAG-CAG-CAG-CAG',
+      result: 'Repeated Huntington mutation sequence detected.',
+      advice: 'Observe the repeated DNA pattern linked to neurological degeneration.',
+      bloodEffect:
+        'Protein buildup can gradually damage nerve communication.',
+      dnaEffect:
+        'Repeated CAG sequences create harmful protein accumulations.',
+      bloodCells: '🧠 ⬤ 🧠 ⬤',
+      dnaColor: 'from-indigo-400 to-violet-500',
+      petriPattern: '🟣 🧫 🟣 🧫',
+      petriDescription:
+        'Dense protein-like deposits appearing throughout the culture dish.'
+    }
+  };
+
+  const [selectedDisease, setSelectedDisease] = useState('Cancer');
+  const [messages, setMessages] = useState([
+    {
+      sender: 'MedAI',
+      text: 'Welcome to the MNTC Biomedical DNA Research Lab. I will guide you through today’s DNA mutation experiment.'
+    }
+  ]);
+  const [input, setInput] = useState('');
+  const [experimentStarted, setExperimentStarted] = useState(false);
+
+  const current = diseases[selectedDisease];
+
+  const aiResponses = {
+    dna: 'DNA stores genetic instructions inside cells. Scientists analyze DNA to identify mutations connected to diseases.',
+    mutation:
+      'A mutation is a change in the DNA sequence. Some mutations are harmless, while others can lead to diseases.',
+    cancer:
+      'Cancer can develop when mutations affect genes controlling cell growth.',
+    sickle:
+      'Sickle Cell Disease changes the shape of red blood cells due to a hemoglobin mutation.',
+    cystic:
+      'Cystic Fibrosis affects mucus production because of mutations in the CFTR gene.',
+    default:
+      'Continue observing the DNA sample and laboratory data. Ask me about mutations, diseases, or DNA structure.'
+  };
+
+  function startExperiment() {
+    setExperimentStarted(true);
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        sender: 'MedAI',
+        text: `Experiment initialized. Disease sample selected: ${selectedDisease}. ${current.advice}`
+      }
+    ]);
+  }
+
+  function sendMessage() {
+    if (!input.trim()) return;
+
+    const userMessage = {
+      sender: 'Student',
+      text: input
+    };
+
+    let response = aiResponses.default;
+    const lower = input.toLowerCase();
+
+    if (lower.includes('dna')) {
+      response = aiResponses.dna;
+    } else if (lower.includes('mutation')) {
+      response = aiResponses.mutation;
+    } else if (lower.includes('cancer')) {
+      response = aiResponses.cancer;
+    } else if (lower.includes('sickle')) {
+      response = aiResponses.sickle;
+    } else if (lower.includes('cystic')) {
+      response = aiResponses.cystic;
+    }
+
+    const aiMessage = {
+      sender: 'MedAI',
+      text: response
+    };
+
+    setMessages((prev) => [...prev, userMessage, aiMessage]);
+    setInput('');
+  }
+
+  function handleKeyPress(e) {
+    if (e.key === 'Enter') {
+      sendMessage();
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white p-6 font-sans">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-5xl font-bold mb-2">
+            MNTC Biomedical DNA Lab
+          </h1>
+
+          <p className="text-slate-300 text-lg">
+            Interactive DNA Disease Investigation with AI Companion Support
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="bg-slate-700 rounded-3xl p-6 shadow-2xl border border-cyan-400">
+            <h2 className="text-2xl font-bold mb-4">
+              🧪 Experiment Setup
+            </h2>
+
+            <label className="block mb-2 text-cyan-300">
+              Select Disease Sample
+            </label>
+
+            <div className="max-h-72 overflow-y-auto rounded-2xl border border-cyan-400 bg-slate-800 p-2 mb-4">
+              <select
+                value={selectedDisease}
+                onChange={(e) => setSelectedDisease(e.target.value)}
+                size={10}
+                className="w-full bg-slate-800 text-white p-2 rounded-xl outline-none"
+              >
+                {Object.keys(diseases).map((disease) => (
+                  <option
+                    key={disease}
+                    value={disease}
+                    className="p-3 rounded-lg mb-1"
+                  >
+                    {disease} Sample
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              onClick={startExperiment}
+              className="w-full bg-cyan-500 hover:bg-cyan-400 transition-all text-black font-bold py-3 rounded-2xl"
+            >
+              Start DNA Analysis
+            </button>
+
+            {experimentStarted && (
+              <div className="mt-6 bg-slate-800 p-4 rounded-2xl border border-green-400">
+                <h3 className="text-xl font-bold mb-2">DNA Results</h3>
+
+                <p className="mb-2">
+                  <span className="text-cyan-300">DNA Strand:</span>{' '}
+                  {current.dna}
+                </p>
+
+                <p>
+                  <span className="text-cyan-300">Analysis:</span>{' '}
+                  {current.result}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-slate-700 rounded-3xl p-6 shadow-2xl border border-pink-400 flex flex-col items-center justify-center">
+            <h2 className="text-2xl font-bold mb-4">
+              🔬 Laboratory Visuals
+            </h2>
+
+            <div className="grid grid-cols-2 gap-6 w-full">
+              <div className="flex flex-col items-center col-span-2">
+                <div className="w-52 h-52 rounded-full border-8 border-pink-300 bg-pink-200 flex flex-wrap items-center justify-center text-black text-center text-3xl font-bold shadow-xl p-6 gap-2 relative overflow-hidden">
+                  <div className="absolute inset-0 opacity-20 bg-gradient-to-br from-pink-500 to-red-500"></div>
+                  <div className="relative z-10 leading-relaxed text-center">
+                    {current.petriPattern}
+                  </div>
+                </div>
+
+                <p className="mt-3 text-pink-200 text-center max-w-xs">
+                  {current.petriDescription}
+                </p>
+              </div>
+
+              <div className="flex flex-col items-center">
+                <div
+                  className={`w-24 h-44 bg-gradient-to-b ${current.dnaColor} rounded-b-3xl rounded-t-lg border-4 border-cyan-100 relative overflow-hidden shadow-xl`}
+                >
+                  <div className="absolute inset-0 flex items-center justify-center text-white text-3xl font-bold opacity-70">
+                    DNA
+                  </div>
+                </div>
+
+                <p className="mt-2 text-cyan-200 text-center text-sm">
+                  {current.dnaEffect}
+                </p>
+              </div>
+
+              <div className="flex flex-col items-center">
+                <div className="w-32 h-44 bg-red-200 rounded-3xl border-4 border-red-100 shadow-xl flex items-center justify-center text-4xl p-2 text-red-700 text-center">
+                  {current.bloodCells}
+                </div>
+
+                <p className="mt-2 text-red-200 text-center text-sm">
+                  {current.bloodEffect}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-slate-700 rounded-3xl p-6 shadow-2xl border border-yellow-400 flex flex-col">
+            <h2 className="text-2xl font-bold mb-4">🤖 MedAI Companion</h2>
+
+            <div className="flex-1 bg-slate-800 rounded-2xl p-4 overflow-y-auto h-96 border border-yellow-300">
+              {messages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`mb-4 p-3 rounded-2xl ${
+                    msg.sender === 'MedAI'
+                      ? 'bg-yellow-500 text-black'
+                      : 'bg-cyan-500 text-black ml-10'
+                  }`}
+                >
+                  <strong>{msg.sender}: </strong>
+                  {msg.text}
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 flex gap-2">
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyPress}
+                placeholder="Ask about DNA, mutations, or diseases..."
+                className="flex-1 p-3 rounded-2xl bg-slate-800 border border-yellow-400"
+              />
+
+              <button
+                onClick={sendMessage}
+                className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-5 rounded-2xl"
+              >
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 bg-slate-700 rounded-3xl p-6 border border-cyan-400 shadow-2xl">
+          <h2 className="text-3xl font-bold mb-4">
+            🧬 Classroom Objectives
+          </h2>
+
+          <div className="grid md:grid-cols-3 gap-4 text-slate-200">
+            <div className="bg-slate-800 p-4 rounded-2xl">
+              <h3 className="font-bold text-cyan-300 mb-2">
+                DNA Sequencing
+              </h3>
+
+              <p>
+                Compare healthy and mutated DNA strands to identify
+                disease-causing genetic changes.
+              </p>
+            </div>
+
+            <div className="bg-slate-800 p-4 rounded-2xl">
+              <h3 className="font-bold text-pink-300 mb-2">
+                Laboratory Analysis
+              </h3>
+
+              <p>
+                Study biomedical samples using virtual petri dishes, blood
+                samples, and DNA vials.
+              </p>
+            </div>
+
+            <div className="bg-slate-800 p-4 rounded-2xl">
+              <h3 className="font-bold text-yellow-300 mb-2">
+                AI Guided Learning
+              </h3>
+
+              <p>
+                Use the MedAI companion to receive support, explanations, and
+                guidance throughout the experiment.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 bg-slate-800 rounded-3xl p-6 border border-slate-600 text-slate-300">
+          <h2 className="text-2xl font-bold mb-3">✅ App Features Tested</h2>
+
+          <ul className="list-disc ml-6 space-y-2">
+            <li>React import issue fixed</li>
+            <li>Disease sample switching works</li>
+            <li>DNA analysis panel displays correctly</li>
+            <li>AI companion responds to keywords</li>
+            <li>Enter key submits chat messages</li>
+            <li>Responsive biomedical lab layout verified</li>
+            <li>No adjacent JSX element errors remain</li>
+            <li>Scrollable disease selection menu added</li>
+            <li>Additional disease experiment samples added</li>
+            <li>Asthma disease sample syntax bug fixed</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}

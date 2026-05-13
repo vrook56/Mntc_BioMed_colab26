@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MNTC PAI BioMed Colab 2026 Gallery</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: #0d1b2e;
+      --panel-soft: #12263f;
+      --card: #ffffff;
+      --text: #eaf3ff;
+      --muted: #a9bdd3;
+      --blue: #19a7ce;
+      --teal: #11c5b8;
+      --gold: #f4c542;
+      --line: rgba(255, 255, 255, 0.14);
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+      background:
+        linear-gradient(rgba(7, 17, 31, 0.92), rgba(7, 17, 31, 0.96)),
+        radial-gradient(circle at 15% 10%, rgba(25, 167, 206, 0.30), transparent 28%),
+        radial-gradient(circle at 88% 12%, rgba(17, 197, 184, 0.22), transparent 26%),
+        #07111f;
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .page-shell {
+      max-width: 1420px;
+      margin: 0 auto;
+      padding: 34px 28px 48px;
+    }
+
+    header {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(13, 27, 46, 0.92), rgba(18, 38, 63, 0.84));
+      border-radius: 26px;
+      padding: 34px 38px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(25, 167, 206, 0.18), transparent 45%, rgba(244, 197, 66, 0.08));
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      position: relative;
+      color: var(--teal);
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-weight: 800;
+      font-size: 0.82rem;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      position: relative;
+      margin: 0;
+      font-size: clamp(2.1rem, 5vw, 4.4rem);
+      line-height: 1;
+      letter-spacing: -0.04em;
+      color: #ffffff;
+    }
+
+    .hero-statement {
+      position: relative;
+      max-width: 940px;
+      margin-top: 18px;
+      font-size: clamp(1.05rem, 2vw, 1.35rem);
+      line-height: 1.55;
+      color: #d8e9f8;
+      font-weight: 600;
+    }
+
+    .hero-statement strong {
+      color: var(--gold);
+    }
+
+    .subcopy {
+      position: relative;
+      max-width: 1050px;
+      margin-top: 14px;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 1rem;
+    }
+
+    .gallery-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin: 28px 4px 14px;
+      color: var(--muted);
+    }
+
+    .gallery-header h2 {
+      margin: 0;
+      color: #ffffff;
+      font-size: 1.35rem;
+      letter-spacing: -0.02em;
+    }
+
+    .hint {
+      margin: 0;
+      font-size: 0.95rem;
+    }
+
+    .project-strip {
+      display: flex;
+      gap: 26px;
+      overflow-x: auto;
+      padding: 10px 4px 34px;
+      scroll-snap-type: x mandatory;
+    }
+
+    .project-strip::-webkit-scrollbar { height: 12px; }
+    .project-strip::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+    }
+    .project-strip::-webkit-scrollbar-thumb {
+      background: linear-gradient(90deg, var(--blue), var(--teal));
+      border-radius: 999px;
+    }
+
+    .project-card {
+      flex: 0 0 390px;
+      scroll-snap-align: start;
+      background: var(--card);
+      color: #132238;
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .project-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 26px 70px rgba(0, 0, 0, 0.46);
+    }
+
+    .project-card a {
+      color: inherit;
+      text-decoration: none;
+      display: block;
+    }
+
+    .image-frame {
+      height: 540px;
+      background: #0b1525;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.10);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .image-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+      display: block;
+    }
+
+    .project-info {
+      padding: 22px 24px 24px;
+      background: #ffffff;
+    }
+
+    .project-info h3 {
+      margin: 0 0 8px;
+      font-size: 1.42rem;
+      color: #07111f;
+      letter-spacing: -0.03em;
+    }
+
+    .creator {
+      margin: 0 0 12px;
+      color: #116c7b;
+      font-weight: 800;
+    }
+
+    .description {
+      margin: 0;
+      color: #46576b;
+      line-height: 1.55;
+      font-size: 0.98rem;
+    }
+
+    .launch-note {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 18px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: #07111f;
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 0.92rem;
+    }
+
+    .launch-note span {
+      color: var(--gold);
+    }
+
+    footer {
+      margin-top: 12px;
+      text-align: center;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 720px) {
+      .page-shell { padding: 20px 14px 36px; }
+      header { padding: 28px 22px; }
+      .gallery-header { display: block; }
+      .hint { margin-top: 6px; }
+      .project-card { flex-basis: 320px; }
+      .image-frame { height: 445px; }
+    }
+  </style>
+</head>
+<body>
+  <!--
+    IMPORTANT FOLDER RULE:
+    Put this index.html beside Project01, Project02, Project03, etc.
+
+    Each project folder must contain EXACTLY:
+      app.html
+      infograph.png
+      about.txt
+
+    Example:
+      Gallery/index.html
+      Gallery/Project01/app.html
+      Gallery/Project01/infograph.png
+      Gallery/Project01/about.txt
+  -->
+
+  <div class="page-shell">
+    <header>
+      <div class="eyebrow">Moore Norman Technology Center • Programming & Artificial Intelligence</div>
+      <h1>MNTC PAI BioMed Colab 2026 Gallery</h1>
+      <div class="hero-statement">
+        Student-built biomedical simulations where <strong>software engineering</strong>, <strong>AI-assisted design</strong>, and <strong>real classroom collaboration</strong> become interactive learning tools.
+      </div>
+      <p class="subcopy">
+        Explore BioMed technology applications developed through the MNTC Programming & Artificial Intelligence program in collaboration with BioMed students and faculty. Scroll through the project infographs and click any card to launch the student-built application.
+      </p>
+    </header>
+
+    <div class="gallery-header">
+      <h2>Interactive Project Showcase</h2>
+      <p class="hint">Scroll horizontally → Click a project to launch</p>
+    </div>
+
+    <main class="project-strip">
+
+      <article class="project-card">
+        <a href="Project01/app.html" target="_blank">
+          <div class="image-frame">
+            <img src="Project01/infograph.png" alt="DNA Lab Infograph" />
+          </div>
+          <div class="project-info">
+            <h3>Infection&Immunity</h3>
+            <p class="creator">Created by Shali Shoemaker</p>
+            <p class="description">Interactive infection and immunity demonstration showing pathogen invasion, immune response activation, recovery, and biomedical concepts.</p>
+            <div class="launch-note"><span>●</span> Launch application</div>
+          </div>
+        </a>
+      </article>
+
+      <article class="project-card">
+        <a href="Project02/app.html" target="_blank">
+          <div class="image-frame">
+            <img src="Project02/infograph.png" alt="Clinical Skills Simulation Infograph" />
+          </div>
+          <div class="project-info">
+            <h3>ClinicalSkillsSim</h3>
+            <p class="creator">Created by Eliana Babbit</p>
+            <p class="description">Clinical skills simulation focused on patient care, vital signs, communication, teamwork, and healthcare decision-making.</p>
+            <div class="launch-note"><span>●</span> Launch application</div>
+          </div>
+        </a>
+      </article>
+
+      <article class="project-card">
+        <a href="Project03/app.html" target="_blank">
+          <div class="image-frame">
+            <img src="Project03/infograph.png" alt="Clinical Skills Trainer Infograph" />
+          </div>
+          <div class="project-info">
+            <h3>ClinicalSkillsTrainer</h3>
+            <p class="creator">Created by Matthew Mercer</p>
+            <p class="description">Biomedical vitals and reflex companion app designed to help students measure, record, and interpret patient health indicators.</p>
+            <div class="launch-note"><span>●</span> Launch application</div>
+          </div>
+        </a>
+      </article>
+
+      <article class="project-card">
+        <a href="Project04/app.html" target="_blank">
+          <div class="image-frame">
+            <img src="Project04/infograph.png" alt="Forensic Investigation Infograph" />
+          </div>
+          <div class="project-info">
+            <h3>ForensicInvestigation</h3>
+            <p class="creator">Created by William Berry</p>
+            <p class="description">Interactive biomedical crime scene simulator featuring fingerprint analysis, DNA evidence, suspect investigation, and forensic reasoning.</p>
+            <div class="launch-note"><span>●</span> Launch application</div>
+          </div>
+        </a>
+      </article>
+
+      <article class="project-card">
+        <a href="Project05/app.html" target="_blank">
+          <div class="image-frame">
+            <img src="Project05/infograph.png" alt="Infection and Immunity Infograph" />
+          </div>
+          <div class="project-info">
+            <h3>Infection & Immunity</h3>
+            <p class="creator">Created by Shali Shoemaker</p>
+            <p class="description">Interactive infection and immunity demonstration showing pathogen invasion, immune response activation, recovery, and biomedical concepts.</p>
+            <div class="launch-note"><span>●</span> Launch application</div>
+          </div>
+        </a>
+      </article>
+
+      <article class="project-card">
+        <a href="Project06/app.html" target="_blank">
+          <div class="image-frame">
+            <img src="Project06/infograph.png" alt="Microbiology Lab Infograph" />
+          </div>
+          <div class="project-info">
+            <h3>MicroBioLab</h3>
+            <p class="creator">Created by Kai Crawford</p>
+            <p class="description">Advanced microbiology exploration lab featuring microbes, pathogen analysis, treatment simulations, and AI-assisted biomedical learning.</p>
+            <div class="launch-note"><span>●</span> Launch application</div>
+          </div>
+        </a>
+      </article>
+
+    </main>
+
+    <footer>
+      Created by MNTC Programming & Artificial Intelligence Students<br />
+      Guided by Dr. Victor Rook, MNTC PAI Instructor<br />
+      Inspired by Ethan Murphy, MNTC Cybersecurity
+    </footer>
+  </div>
+</body>
+</html>

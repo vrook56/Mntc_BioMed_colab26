@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Infection & Immunity Interactive Demo</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Inter, Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(255, 64, 129, 0.22), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(0, 229, 255, 0.18), transparent 35%),
+        linear-gradient(135deg, #090a12, #10111f 45%, #05060a);
+      color: #f4f7fb;
+      overflow-x: hidden;
+    }
+
+    .background-cells {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.18;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .cell-bg {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      animation: float 12s infinite ease-in-out;
+    }
+
+    .cell-bg:nth-child(1) { width: 140px; height: 140px; left: 8%; top: 15%; }
+    .cell-bg:nth-child(2) { width: 90px; height: 90px; right: 12%; top: 20%; animation-delay: 2s; }
+    .cell-bg:nth-child(3) { width: 190px; height: 190px; left: 60%; bottom: 8%; animation-delay: 4s; }
+    .cell-bg:nth-child(4) { width: 70px; height: 70px; left: 22%; bottom: 22%; animation-delay: 1s; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-28px) scale(1.06); }
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 34px 20px 50px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 24px;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+
+    .hero {
+      padding: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(18px);
+      border-radius: 28px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+    }
+
+    .eyebrow {
+      color: #8be9ff;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      font-size: 0.75rem;
+      margin-bottom: 12px;
+      font-weight: 800;
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 6vw, 4.8rem);
+      line-height: 0.95;
+      margin-bottom: 16px;
+    }
+
+    h1 span {
+      color: #ff4f93;
+      text-shadow: 0 0 24px rgba(255, 79, 147, 0.4);
+    }
+
+    .hero p {
+      color: #cdd6e5;
+      line-height: 1.7;
+      max-width: 680px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 18px;
+      color: white;
+      background: linear-gradient(135deg, #ff4f93, #8d4dff);
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 12px 34px rgba(255, 79, 147, 0.25);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 42px rgba(255, 79, 147, 0.35);
+    }
+
+    button.secondary {
+      background: rgba(255, 255, 255, 0.09);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: none;
+    }
+
+    .status-card {
+      border-radius: 28px;
+      padding: 24px;
+      background: linear-gradient(160deg, rgba(0, 229, 255, 0.16), rgba(255, 79, 147, 0.12));
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+    }
+
+    .status-card h2 {
+      margin-bottom: 14px;
+      font-size: 1.15rem;
+    }
+
+    .meter-group {
+      display: grid;
+      gap: 14px;
+    }
+
+    .meter-row label {
+      display: flex;
+      justify-content: space-between;
+      color: #dce7f7;
+      margin-bottom: 7px;
+      font-size: 0.9rem;
+    }
+
+    .meter {
+      height: 12px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.11);
+      overflow: hidden;
+    }
+
+    .meter span {
+      display: block;
+      height: 100%;
+      width: 50%;
+      border-radius: 99px;
+      transition: width 0.5s ease;
+    }
+
+    #infectionBar { background: linear-gradient(90deg, #ff315f, #ff9a3d); }
+    #immuneBar { background: linear-gradient(90deg, #38f8ff, #6d7cff); }
+    #healthBar { background: linear-gradient(90deg, #55ff99, #b5ff60); }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 0.9fr;
+      gap: 22px;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 28px;
+      padding: 22px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 20px 70px rgba(0, 0, 0, 0.25);
+    }
+
+    .simulation {
+      min-height: 490px;
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px),
+        rgba(3, 5, 12, 0.55);
+      background-size: 32px 32px;
+    }
+
+    .simulation h2,
+    .info-panel h2,
+    .timeline h2 {
+      margin-bottom: 8px;
+      font-size: 1.35rem;
+    }
+
+    .muted {
+      color: #aebad0;
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+
+    .arena {
+      position: relative;
+      height: 350px;
+      margin-top: 18px;
+      border-radius: 22px;
+      background: radial-gradient(circle, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.08);
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      animation: drift 5s infinite alternate ease-in-out;
+      user-select: none;
+    }
+
+    .pathogen {
+      background: rgba(255, 49, 95, 0.24);
+      border: 1px solid rgba(255, 49, 95, 0.7);
+      box-shadow: 0 0 22px rgba(255, 49, 95, 0.35);
+    }
+
+    .immune {
+      background: rgba(56, 248, 255, 0.2);
+      border: 1px solid rgba(56, 248, 255, 0.7);
+      box-shadow: 0 0 22px rgba(56, 248, 255, 0.35);
+    }
+
+    @keyframes drift {
+      from { transform: translate(0, 0) rotate(0deg); }
+      to { transform: translate(20px, -18px) rotate(18deg); }
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .control-card {
+      padding: 14px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .control-card h3 {
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+    }
+
+    .control-card p {
+      color: #aebad0;
+      font-size: 0.8rem;
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+
+    .info-panel {
+      display: grid;
+      gap: 16px;
+    }
+
+    .topic-box {
+      border-radius: 22px;
+      padding: 18px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .topic-box h3 {
+      margin-bottom: 8px;
+      color: #8be9ff;
+    }
+
+    .topic-box p,
+    .topic-box li {
+      color: #d3dbea;
+      line-height: 1.55;
+      font-size: 0.93rem;
+    }
+
+    .topic-box ul {
+      padding-left: 18px;
+      margin-top: 8px;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .tab {
+      padding: 9px 12px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 999px;
+      color: #dce7f7;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, #38f8ff, #8d4dff);
+      color: white;
+      font-weight: 800;
+    }
+
+    .timeline {
+      margin-top: 22px;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .step {
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      transition: transform 0.2s ease, background 0.2s ease;
+      cursor: pointer;
+    }
+
+    .step:hover, .step.active {
+      transform: translateY(-4px);
+      background: rgba(255, 79, 147, 0.15);
+    }
+
+    .step-number {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+      margin-bottom: 10px;
+      font-weight: 900;
+      color: #8be9ff;
+    }
+
+    .step h3 {
+      font-size: 0.98rem;
+      margin-bottom: 6px;
+    }
+
+    .step p {
+      color: #aebad0;
+      font-size: 0.83rem;
+      line-height: 1.45;
+    }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 24px;
+      color: #8793aa;
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 900px) {
+      header,
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .controls,
+      .steps {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .controls,
+      .steps {
+        grid-template-columns: 1fr;
+      }
+
+      .hero,
+      .panel,
+      .status-card {
+        border-radius: 22px;
+        padding: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="background-cells">
+    <div class="cell-bg"></div>
+    <div class="cell-bg"></div>
+    <div class="cell-bg"></div>
+    <div class="cell-bg"></div>
+  </div>
+
+  <main class="app">
+    <header>
+      <section class="hero">
+        <div class="eyebrow">Career Tech Biomedical Science</div>
+        <h1>Infection <span>&</span><br />Immunity</h1>
+        <p>
+          An interactive demonstration showing how pathogens enter the body, multiply, and trigger immune defenses. Use the controls to simulate exposure, immune response, treatment, and recovery.
+        </p>
+        <div class="hero-actions">
+          <button onclick="startOutbreak()">Start Infection</button>
+          <button class="secondary" onclick="resetDemo()">Reset Demo</button>
+        </div>
+      </section>
+
+      <aside class="status-card">
+        <h2>Patient Response Monitor</h2>
+        <div class="meter-group">
+          <div class="meter-row">
+            <label><span>Pathogen Load</span><strong id="infectionText">25%</strong></label>
+            <div class="meter"><span id="infectionBar"></span></div>
+          </div>
+          <div class="meter-row">
+            <label><span>Immune Activity</span><strong id="immuneText">45%</strong></label>
+            <div class="meter"><span id="immuneBar"></span></div>
+          </div>
+          <div class="meter-row">
+            <label><span>Overall Health</span><strong id="healthText">85%</strong></label>
+            <div class="meter"><span id="healthBar"></span></div>
+          </div>
+        </div>
+      </aside>
+    </header>
+
+    <section class="main-grid">
+      <section class="panel simulation">
+        <h2>Live Cell Simulation</h2>
+        <p class="muted">Red particles represent pathogens. Blue particles represent immune cells responding to the threat.</p>
+
+        <div class="arena" id="arena"></div>
+
+        <div class="controls">
+          <div class="control-card">
+            <h3>🦠 Add Pathogens</h3>
+            <p>Simulates exposure to bacteria, viruses, or other infectious agents.</p>
+            <button onclick="addPathogens()">Expose</button>
+          </div>
+          <div class="control-card">
+            <h3>🛡️ Activate Immunity</h3>
+            <p>Boosts immune activity with white blood cells and antibodies.</p>
+            <button onclick="activateImmunity()">Defend</button>
+          </div>
+          <div class="control-card">
+            <h3>💊 Treatment</h3>
+            <p>Shows how medicine, rest, fluids, or vaccines can support recovery.</p>
+            <button onclick="treatPatient()">Treat</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel info-panel">
+        <div>
+          <h2>Information Center</h2>
+          <p class="muted">Click a topic to learn more about infection and immunity.</p>
+          <div class="tabs">
+            <button class="tab active" onclick="showTopic('infection', this)">Infection</button>
+            <button class="tab" onclick="showTopic('immunity', this)">Immunity</button>
+            <button class="tab" onclick="showTopic('vaccines', this)">Vaccines</button>
+            <button class="tab" onclick="showTopic('prevention', this)">Prevention</button>
+          </div>
+        </div>
+
+        <div class="topic-box" id="topicBox">
+          <h3>What is an infection?</h3>
+          <p>
+            An infection happens when a pathogen enters the body, survives, and begins to multiply. Common pathogens include bacteria, viruses, fungi, and parasites.
+          </p>
+          <ul>
+            <li>Pathogens enter through cuts, airways, food, water, or body fluids.</li>
+            <li>Symptoms can occur when the immune system responds.</li>
+            <li>Some infections are mild, while others need medical treatment.</li>
+          </ul>
+        </div>
+      </aside>
+    </section>
+
+    <section class="panel timeline">
+      <h2>Stages of Immune Response</h2>
+      <p class="muted">Click each stage to update the simulation and see what happens inside the body.</p>
+
+      <div class="steps">
+        <div class="step active" onclick="stageChange(1, this)">
+          <div class="step-number">1</div>
+          <h3>Exposure</h3>
+          <p>A pathogen enters the body through a vulnerable entry point.</p>
+        </div>
+        <div class="step" onclick="stageChange(2, this)">
+          <div class="step-number">2</div>
+          <h3>Recognition</h3>
+          <p>Immune cells detect foreign antigens and send warning signals.</p>
+        </div>
+        <div class="step" onclick="stageChange(3, this)">
+          <div class="step-number">3</div>
+          <h3>Attack</h3>
+          <p>White blood cells and antibodies target the invading pathogen.</p>
+        </div>
+        <div class="step" onclick="stageChange(4, this)">
+          <div class="step-number">4</div>
+          <h3>Memory</h3>
+          <p>The immune system remembers the pathogen for faster future defense.</p>
+        </div>
+      </div>
+    </section>
+
+    <p class="footer-note">Designed for a biomedical classroom demonstration — edit the text boxes to add your class notes, sources, or assignment requirements.</p>
+  </main>
+
+  <script>
+    const arena = document.getElementById('arena');
+    let infection = 25;
+    let immunity = 45;
+    let health = 85;
+
+    const topics = {
+      infection: {
+        title: 'What is an infection?',
+        body: 'An infection happens when a pathogen enters the body, survives, and begins to multiply. Common pathogens include bacteria, viruses, fungi, and parasites.',
+        bullets: [
+          'Pathogens can enter through cuts, airways, food, water, or body fluids.',
+          'Symptoms can appear because of both the pathogen and the immune response.',
+          'Treatment depends on the type of pathogen and severity of illness.'
+        ]
+      },
+      immunity: {
+        title: 'How immunity protects the body',
+        body: 'Immunity is the body’s defense system. It identifies harmful invaders, attacks them, and helps the body recover.',
+        bullets: [
+          'Innate immunity responds quickly and generally to threats.',
+          'Adaptive immunity creates specific defenses, like antibodies.',
+          'Memory cells help the body respond faster if the pathogen returns.'
+        ]
+      },
+      vaccines: {
+        title: 'How vaccines help',
+        body: 'Vaccines train the immune system to recognize a pathogen without causing the full disease.',
+        bullets: [
+          'They help the body create immune memory.',
+          'They can reduce the severity or spread of disease.',
+          'They support both individual and community protection.'
+        ]
+      },
+      prevention: {
+        title: 'How infections can be prevented',
+        body: 'Prevention focuses on lowering exposure to pathogens and strengthening the body’s ability to respond.',
+        bullets: [
+          'Wash hands and keep wounds clean.',
+          'Avoid sharing drinks, food, or personal items when sick.',
+          'Stay updated on recommended vaccines and seek medical care when needed.'
+        ]
+      }
+    };
+
+    function randomPosition() {
+      const x = Math.random() * (arena.clientWidth - 42);
+      const y = Math.random() * (arena.clientHeight - 42);
+      return { x, y };
+    }
+
+    function createParticle(type) {
+      const particle = document.createElement('div');
+      particle.className = `particle ${type}`;
+      particle.textContent = type === 'pathogen' ? '✹' : '✦';
+      const pos = randomPosition();
+      particle.style.left = `${pos.x}px`;
+      particle.style.top = `${pos.y}px`;
+      particle.style.animationDuration = `${3 + Math.random() * 4}s`;
+      arena.appendChild(particle);
+    }
+
+    function clearParticles() {
+      arena.innerHTML = '';
+    }
+
+    function renderParticles(pathogenCount = 8, immuneCount = 7) {
+      clearParticles();
+      for (let i = 0; i < pathogenCount; i++) createParticle('pathogen');
+      for (let i = 0; i < immuneCount; i++) createParticle('immune');
+    }
+
+    function updateMeters() {
+      infection = Math.max(0, Math.min(100, infection));
+      immunity = Math.max(0, Math.min(100, immunity));
+      health = Math.max(0, Math.min(100, health));
+
+      document.getElementById('infectionBar').style.width = infection + '%';
+      document.getElementById('immuneBar').style.width = immunity + '%';
+      document.getElementById('healthBar').style.width = health + '%';
+
+      document.getElementById('infectionText').textContent = infection + '%';
+      document.getElementById('immuneText').textContent = immunity + '%';
+      document.getElementById('healthText').textContent = health + '%';
+    }
+
+    function addPathogens() {
+      infection += 18;
+      health -= 10;
+      renderParticles(Math.round(infection / 6), Math.round(immunity / 9));
+      updateMeters();
+    }
+
+    function activateImmunity() {
+      immunity += 18;
+      infection -= 10;
+      health += 4;
+      renderParticles(Math.round(infection / 7), Math.round(immunity / 6));
+      updateMeters();
+    }
+
+    function treatPatient() {
+      infection -= 22;
+      immunity += 8;
+      health += 16;
+      renderParticles(Math.round(infection / 8), Math.round(immunity / 7));
+      updateMeters();
+    }
+
+    function startOutbreak() {
+      infection = 68;
+      immunity = 38;
+      health = 58;
+      renderParticles(16, 5);
+      updateMeters();
+    }
+
+    function resetDemo() {
+      infection = 25;
+      immunity = 45;
+      health = 85;
+      renderParticles(8, 7);
+      updateMeters();
+    }
+
+    function showTopic(topic, button) {
+      const selected = topics[topic];
+      const topicBox = document.getElementById('topicBox');
+      topicBox.innerHTML = `
+        <h3>${selected.title}</h3>
+        <p>${selected.body}</p>
+        <ul>${selected.bullets.map(item => `<li>${item}</li>`).join('')}</ul>
+      `;
+
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      button.classList.add('active');
+    }
+
+    function stageChange(stage, card) {
+      document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
+      card.classList.add('active');
+
+      if (stage === 1) {
+        infection = 42;
+        immunity = 25;
+        health = 76;
+        renderParticles(10, 3);
+      }
+      if (stage === 2) {
+        infection = 55;
+        immunity = 48;
+        health = 67;
+        renderParticles(12, 7);
+      }
+      if (stage === 3) {
+        infection = 35;
+        immunity = 78;
+        health = 74;
+        renderParticles(7, 14);
+      }
+      if (stage === 4) {
+        infection = 12;
+        immunity = 88;
+        health = 92;
+        renderParticles(3, 16);
+      }
+      updateMeters();
+    }
+
+    resetDemo();
+  </script>
+</body>
+</html>
