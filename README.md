@@ -1,5 +1,5 @@
-MNTC BioMed Collaboration 2026
-Moore Norman Technology Center — Student Project Gallery
+# MNTC BioMed Collaboration 2026
+**Moore Norman Technology Center — Student Project Gallery**
 A curated collection of student-built projects developed through the 2026 BioMed Collaboration at Moore Norman Technology Center (MNTC) in Norman, Oklahoma. This gallery showcases interactive, browser-based projects created by students working at the intersection of technology and biomedical concepts.
 ---
 🔗 Live Site
