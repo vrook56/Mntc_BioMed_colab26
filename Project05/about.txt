@@ -1,2 +1,3 @@
 Jose Mendoza
 DNA_Lab
+Virtual DNA laboratory where students extract, analyze, and interpret genetic evidence to solve biomedical and forensic challenges.
